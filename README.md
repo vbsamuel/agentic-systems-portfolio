@@ -80,3 +80,44 @@ The engineering track still lacks an AI coding-agent runtime with independent de
 ## Model-authored engineering repair
 
 The new [repair agent](src/agentic_portfolio/repair_agent.py) performs an actual local-model proposal against a failing Git checkout, applies a bounded edit in a detached worktree after an explicit execution flag, and runs post-change tests. See [operator contract](REPAIR_AGENT.md). It is **not** yet part of a fully recoverable unified two-agent service, and no observed local-model repair run has been qualified.
+
+
+## Current operational vertical and observed outcome (2026-10-13)
+
+**Start here for the CURRENT system.** Some earlier sections of this README describe the original limited implementation and are retained as development history. They do **not** supersede this section.
+
+The current working cross-cut consists of:
+1. **Real inputs / local state:** Configured Git project with reproducible failing test and a SQLite-backed source-of-truth catalog plus HTTP publishing service. [Single vertical operator guide](SINGLE_VERTICAL.md), [configuration](config/local-vertical.example.json).
+2. **Engineering model agent:** Reproduce test failure → feed observed failure and allowlisted source to LM Studio/DeepSeek → require a structured source edit → mutate a detached worktree → rerun the actual validation command → persist a verified candidate Git commit under `refs/agentic-repairs/<sha>`. Original branch is not overwritten. [Repair agent](src/agentic_portfolio/repair_agent.py).
+3. **Recovery of already completed engineering work:** Verify candidate Git ref, exact revision and clean source before reusing the existing result. This avoids another expensive inference request. It is **not** crash-safe exactly-once execution across all steps. [Coordinator](src/agentic_portfolio/live_e2e.py).
+4. **Catalog model agent:** GET the authoritative and published records → compare SKU and fields → send actual observations to the configured LLM → validate `CORRECT` or `ESCALATE` → require explicit trusted-authority policy and correctable-field allowlist for `CORRECT` → bind the decision to observed response digests, channel ETag and policy. [Catalog agent](src/agentic_portfolio/catalog_agent.py).
+5. **Human authorization boundary:** A `CORRECT` decision by itself is **not approval**. The review output identifies `decision_digest`; publication requires explicitly supplying that exact approved digest, matching the rechecked decision and source state. The current digest mechanism is not an identity-authenticated approval signature.
+6. **Publication and independent verification:** When authorized, the channel must accept a conditional ETag-bound HTTP PUT and then return corrected content on an independent GET. Model-originated arbitrary product values are **not** written; deterministic reconciliation is scoped to the approved authoritative source. [HTTP integration](src/agentic_portfolio/http_integration.py).
+7. **Evidence and decision:** A unified run ID, intermediate stage measurements, model usage, Git candidate SHA, discrepancy/decision digest and publication readback are recorded in the JSON artifact. `PASS` is allowed only after required verification, not from model confidence alone.
+
+### Latest observed actual results
+
+See the [dated evidence record](evidence/2026-10-13-two-agent-vertical-qualification.md) for exact Git commits, run IDs, timings and negative paths.
+
+- **Earlier local cross-cut:** real DeepSeek-authored code fix and successful deterministic HTTP product correction both independently verified: `PASS`. This was **not** a two-model autonomous publication.
+- **Current two-model run ID:** `31398dd5-ef83-4ac4-8124-efbacf17e44e`; engineering repair candidate `ed39b89c79094e9b949635bf778df8f9facd9e85` preserved and reused.
+- **Latest two-model review:** DeepSeek returned `CORRECT` for SKU `P-1` after explicit catalog-authority policy was applied. Review digest: `e8b1b13926564ee73ab7965e54812002e7e76e2ce14825f72949a8e34d5c94ca`. Run status `BLOCKED_CATALOG` / `AWAITING_APPROVAL`; `writeback_performed=false`. This is an expected approval hold, **not publication success**.
+- **Latest WSL automated regression reported by operator:** **35/35 PASS**, `TEST_RC=0`, on commit `e8dc43c`.
+
+### Execution and files
+
+Run from the repository root in WSL, with LM Studio running and the configured model actually loaded:
+
+```bash
+cd ~/agentic-systems-portfolio
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m agentic_portfolio.vertical \
+  --config /tmp/agentic-two-model-review.json \
+  --output artifacts/two-model-review.json
+RUN_RC=$?
+printf 'RUN_RC=%s\\n' "$RUN_RC"
+```
+
+The second command needs the operator's **private, existing runtime config**, not merely the checked-in example. A review hold returns nonzero by design. For flow, initial configuration, model selection, resumption and approval steps, see [two-model operating guide](TWO_MODEL_VERTICAL.md), [catalog agent review contract](CATALOG_AGENT.md), and [observed evidence](evidence/2026-10-13-two-agent-vertical-qualification.md).
+
+**Unclosed gates:** Model-approved catalog HTTP publication with post-write reread **under the two-model run**; authenticated reviewer identity; crash-safe replay for publishing; external PIM/CMS integration; security/load/reliability and sustained production use. No production-release or external-customer-impact claim is made.
