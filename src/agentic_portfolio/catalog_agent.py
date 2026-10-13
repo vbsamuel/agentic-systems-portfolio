@@ -119,6 +119,12 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         outcome.update(verified=False,writeback_performed=False,
                        status="AUTHENTICATED_APPROVAL_REJECTED")
         return outcome
+    outcome["approval_evidence"]={
+        "reviewer":approval_grant["reviewer"],
+        "scope":approval_grant["scope"],
+        "expires_at":approval_grant["expires_at"],
+        "signature_sha256":hashlib.sha256(approval_grant["signature"].encode()).hexdigest(),
+        "auth_type":approval_grant.get("auth_type","local_hmac")}
     # Re-read source and channel before a version-controlled write. A changed
     # observation invalidates the approved decision and requires fresh approval.
     live_source=call(catalog_endpoint)
