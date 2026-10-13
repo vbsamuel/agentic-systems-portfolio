@@ -34,3 +34,21 @@ atomicity and correctness depend on the writer. The catalog run remains
 `AWAITING_APPROVAL` until an authorized local writeback is performed,
 verified and the report updated. Do not mark completion based on the monitor
 starting or a read-only test passing.
+
+## Evidence-based graph (new tranche)
+
+The monitor now converts the recorded execution stages and engineering
+sub-events into graph nodes with stable run-scoped identifiers and edges.
+The static HTML export uses the same normalization. Selecting a node
+displays the underlying recorded observation. The graph shows retries and
+recovery stages when those stages were actually written.
+
+**Provenance limitation:** The historical JSON schema records stage order,
+not universal causal span identifiers. Graph edges are labelled
+`recorded_stage_order`, `recorded_substage_order` or membership.
+Those are not asserted to prove independent task dependencies or cross-service
+happens-before. True distributed causality requires new instrumentation with
+durable parent/span IDs and measured tool events at write time.
+
+The monitor remains read-only. Starting the UI does not authorize publishing,
+claim crash-safe replay, or establish production reliability.
