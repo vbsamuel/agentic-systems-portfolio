@@ -173,6 +173,39 @@ printf 'WORKBENCH_RC=%s\n' "$?"
 
 Replace `RUN_DIR` with your actual output path. The browser must be refreshed after regeneration. The journal is read and hash-verified; this viewer cannot mutate runs. Lane labels are UI classifications of observed event names and payloads, **not additional agent identities**. Parent IDs are actual journal relationships; the UI does not invent dependencies.
 
+## Unified operator-workbench acceptance
+
+The read-only workbench provides a complete *evidence-backed local* lifecycle:
+**engineering verification → catalog review → human authorization →
+conditional HTTP publication → independent readback**. Lifecycle cards
+are the interface's documented interpretation of persisted run state.
+Only fields supported by the run report are shown as confirmed. A
+chronological handoff is **not** a native parent/child dependency.
+
+The activity explorer opens in **Paired operations** mode. Each Git,
+validation, model, and HTTP operation is paired using the exact native
+start-event ID referenced by the completion event's `parent_id`.
+Incomplete operations display `INCOMPLETE`; a failed operation is never
+rendered as success. Select an operation to see its inputs, outputs,
+measured latency or duration, outcome, exact causal parent, and buttons
+to inspect its **original start/completion/parent journal events**. Use
+**Native events** to see every source event in order. Both views use the
+same verified source journal; switching modes does not execute code.
+
+The stage timeline distinguishes each observed attempt. For example,
+the catalog review attempt can report `AWAITING_APPROVAL`, followed by
+a separately recorded authorized publication attempt. The generated
+workbench and the input journal remain in the ignored private
+`artifacts/operator-runs/` directory, not in Git.
+
+**Full single-vertical acceptance:** Run the regression suite; regenerate
+the HTML from a qualified run; open the result in Chrome; verify the
+business change, signed approval/readback lifecycle, paired operations,
+native event drill-down, attempt boundaries, and zero clipping at the
+target operator viewport. A generated HTML file alone is not browser
+qualification. Production PIM/CMS integration is not included in this
+local evidence-workbench release.
+
 ## Recovery without starting from scratch
 
 **Catalog model returned an empty response or failed after engineering verified:** Use the **exact failed report path** from the `REVIEW_STARTED` output:
