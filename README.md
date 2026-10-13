@@ -65,3 +65,14 @@ Each stage records the workflow, name, measured wall-clock duration in milliseco
 **Qualification boundaries:** Passing these local tests proves only the stated local execution paths. It does **not** certify autonomous LLM agents, a production Git authoring pipeline, authenticated PIM/ERP/CMS integrations, automatic catalog corrections, external runtime reliability, tenant isolation, security sandboxing, customer use, or production impact. Those must be built and independently tested in subsequent tranches before a production claim.
 
 **Stage acceptance:** An expected negative path is a pass only when the dangerous operation is actually rejected. Any failed expectation marks the aggregate qualification failed. See [qualification.py](src/agentic_portfolio/qualification.py) and [qualification tests](tests/test_qualification.py).
+
+
+## Live HTTP catalog integration (new)
+
+[HTTP integration implementation](src/agentic_portfolio/http_integration.py) fetches actual JSON over HTTP(S) from separately configured catalog and publishing endpoints, with bearer authentication, finite timeouts, content-size bounds and SHA-256 observation digests. In read-only mode it emits discrepancies without mutation. With operator-enabled `writeback=True`, it requires an ETag, issues conditional HTTP PUT with `If-Match`, re-GETs the channel and verifies the changed content against the authoritative catalog. The publishing API must enforce atomic ETag compare-and-swap.
+
+[HTTP execution test](tests/test_http_integration.py) spins up a real loopback HTTP server with separate catalog and channel routes, verifies read-only no-write behavior, sends a real conditional PUT, observes the changed server state and independently rechecks the response. This is a real local HTTP mutation, not a file rewritten by the harness. It is **not** an authenticated connection to an actual retailer or enterprise service.
+
+Endpoint contract: GET catalog and channel URLs must return arrays of records with `sku,title,description,price,currency,availability,image_url`. PUT channel URL accepts `{"products":[...]}` with `If-Match`. Only use configured services that implement and authorize this contract. In particular, do not enable writeback against production services without an operator-approved policy.
+
+The engineering track still lacks an AI coding-agent runtime with independent defect diagnosis and actual generated patch application. No production release or non-stub fully autonomous qualification is claimed.
