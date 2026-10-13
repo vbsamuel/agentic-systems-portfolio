@@ -43,8 +43,9 @@ class EffectLedger:
         with self.db() as db:
             db.execute("BEGIN IMMEDIATE")
             row=db.execute("SELECT state FROM effects WHERE effect_id=?",(effect_id,)).fetchone()
-            if not row or row[0]!="PREPARED":
-                raise ValueError("effect is not prepared")
+            if not row or not (row[0]=="PREPARED" or
+                (row[0] in ("UNCERTAIN","RETRY_REQUIRES_REVIEW") and state=="VERIFIED")):
+                raise ValueError("effect transition prohibited")
             db.execute("UPDATE effects SET state=?,result=? WHERE effect_id=?",
                        (state,canonical(result),effect_id))
             db.execute("COMMIT")
@@ -65,6 +66,7 @@ class EffectLedger:
             state="RETRY_REQUIRES_REVIEW"
         else:
             state="UNCERTAIN"
-        if entry["state"]=="PREPARED":
+        if entry["state"]=="PREPARED" or (
+            state=="VERIFIED" and entry["state"] in ("UNCERTAIN","RETRY_REQUIRES_REVIEW")):
             self.outcome(effect_id,state,{"observed_products":observed_records})
         return state
