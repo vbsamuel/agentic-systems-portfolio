@@ -5,14 +5,21 @@ on:
 permissions:
   contents: read
 jobs:
-  tests:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run unit and integration tests
+      - name: Unit and integration checks
         run: PYTHONPATH=src python -m unittest discover -s tests -v
-      - name: Run both workflows
-        run: PYTHONPATH=src python examples/run_workflows.py
+      - name: Execute measured qualification
+        run: PYTHONPATH=src python -m agentic_portfolio.qualification --output artifacts/qualification.json
+      - name: Publish evidence even after failed qualification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-qualification-evidence
+          path: artifacts/qualification.json
+          if-no-files-found: warn
