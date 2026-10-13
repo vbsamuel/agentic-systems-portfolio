@@ -19,7 +19,7 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn("real-123",text)
             self.assertIn("VERIFIED_CANDIDATE_PERSISTED",text)
             self.assertNotIn("<script>alert(1)</script>",text)
-            self.assertIn("Execution dependency graph",text)
+            self.assertIn("Execution overview",text)
     def test_native_graph_renders_observed_parent_child_ids(self):
         from agentic_portfolio.event_journal import EventJournal
         with tempfile.TemporaryDirectory() as td:
@@ -37,8 +37,9 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn(child["event_id"],html)
             self.assertIn('"schema_version": 2',html)
             self.assertIn('"edge_type": "native_parent_id"',html)
-            self.assertIn('b.style.width="288px"',html)
-            self.assertIn('const x=16+depth*320',html)
+            self.assertIn("Search recorded events",html)
+            self.assertIn("Parent event",html)
+            self.assertIn("Evidence inspector",html)
 
     def test_reject_missing_run_identity(self):
         with tempfile.TemporaryDirectory() as td:
