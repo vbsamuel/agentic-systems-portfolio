@@ -23,6 +23,7 @@ class EventJournal:
     def connect(self):
         db=sqlite3.connect(self.path,timeout=15)
         db.execute("PRAGMA journal_mode=WAL")
+        db.execute("PRAGMA synchronous=FULL")
         return db
     def append(self,run_id,kind,payload,parent_id=None):
         if not run_id or not kind or not isinstance(payload,dict):
