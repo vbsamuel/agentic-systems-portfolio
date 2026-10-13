@@ -52,12 +52,44 @@ const metrics=document.getElementById("metrics");
 for(const [name,value] of entries){const e=document.createElement("div");e.className="metric";const l=document.createElement("div");l.className="label";l.textContent=name;const v=document.createElement("strong");v.textContent=value;e.append(l,v);metrics.append(e)}
 function show(x){document.getElementById("details").textContent=JSON.stringify(x,null,2)}
 const engineering=data.engineering||null,catalog=data.catalog||null;
-const nodes=(data.execution_graph?.nodes||[]).map(n=>({name:n.label,detail:n.observation,edge:n.edge_type,identity:n.id}));
-const dag=document.getElementById("dag");dag.style.display="flex";dag.style.flexDirection="column";dag.style.alignItems="stretch";dag.style.gap="6px";
-nodes.forEach((n,i)=>{if(i){const line=document.createElement("div");line.className="line";dag.append(line)}
-const b=document.createElement("button");b.className="node";b.style.minHeight="70px";const type=document.createElement("div");type.className="label";type.textContent=n.edge||"RUN ROOT";
-const title=document.createElement("strong");title.textContent=n.name;const status=document.createElement("span");status.textContent=n.identity||"NOT OBSERVED";
-b.append(type,title,status);b.addEventListener("click",()=>show(n.detail||{status:"NOT_OBSERVED"}));dag.append(b)});
+const nodes=(data.execution_graph?.nodes||[]).map(n=>({name:n.label,detail:n.observation,edge:n.edge_type,identity:n.id,parent_id:n.parent_id}));
+const dag=document.getElementById("dag");
+dag.style.display="block";dag.style.position="relative";dag.style.overflowX="auto";
+const canvasHeight=Math.max(140,nodes.length*84+20);
+const graphWidth=Math.max(650,...nodes.map((_,i)=>650));
+dag.style.minHeight=canvasHeight+"px";
+const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+svg.setAttribute("width",String(graphWidth));
+svg.setAttribute("height",String(canvasHeight));
+svg.style.position="absolute";svg.style.left="0";svg.style.top="0";svg.style.pointerEvents="none";
+dag.append(svg);
+const locations=new Map();
+const depthOf=new Map();
+nodes.forEach((n,i)=>{
+  const parent=n.parent_id?locations.get(n.parent_id):null;
+  const depth=parent?Math.min(parent.depth+1,5):0;
+  const x=16+depth*72,y=10+i*84;
+  locations.set(n.identity,{x,y,depth});
+  const b=document.createElement("button");b.className="node";
+  b.style.position="absolute";b.style.left=x+"px";b.style.top=y+"px";
+  b.style.width=Math.max(260,graphWidth-x-16)+"px";b.style.minHeight="70px";
+  b.style.padding="10px 16px";b.style.zIndex="2";
+  const type=document.createElement("div");type.className="label";type.textContent=n.edge||"RUN ROOT";
+  const title=document.createElement("strong");title.textContent=n.name;
+  const status=document.createElement("span");status.textContent=n.identity||"NOT OBSERVED";
+  b.append(type,title,status);b.addEventListener("click",()=>show(n.detail||{status:"NOT_OBSERVED"}));dag.append(b);
+  if(parent){
+    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+    const startX=parent.x+20,startY=parent.y+65;
+    const endX=x+10,endY=y+15;
+    path.setAttribute("d","M"+startX+" "+startY+" V"+(endY-7)+" H"+endX+" V"+endY);
+    path.setAttribute("fill","none");
+    path.setAttribute("stroke","#638abb");path.setAttribute("stroke-width","2");
+    path.setAttribute("data-parent-id",n.parent_id);
+    path.setAttribute("data-child-id",n.identity);
+    svg.append(path);
+  }
+});
 const timeline=document.getElementById("timeline");
 const events=(data.stages||[]).map(x=>({name:x.name,stage:x}));for(const x of engineering?.events||[]){events.push({name:"Engineering / "+x.stage,stage:x})}
 for(const item of events){const li=document.createElement("li"),b=document.createElement("button");b.textContent=item.name+" · "+(item.stage.elapsed_ms??item.stage.result?.exit_code??"")+" "+(item.stage.elapsed_ms!==undefined?"ms":"");b.addEventListener("click",()=>show(item.stage));li.append(b);timeline.append(li)}
