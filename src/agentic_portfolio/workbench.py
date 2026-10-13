@@ -56,7 +56,9 @@ const nodes=(data.execution_graph?.nodes||[]).map(n=>({name:n.label,detail:n.obs
 const dag=document.getElementById("dag");
 dag.style.display="block";dag.style.position="relative";dag.style.overflowX="auto";
 const canvasHeight=Math.max(140,nodes.length*84+20);
-const graphWidth=Math.max(650,32+nodes.reduce((max,n)=>{const parentIndex=nodes.findIndex(p=>p.id===n.parent_id);return Math.max(max,parentIndex>=0?1:0)},0)*320+320);
+const depths=new Map();
+for(const n of nodes){depths.set(n.identity,n.parent_id?(depths.get(n.parent_id)??-1)+1:0)}
+const graphWidth=Math.max(650,32+(Math.max(0,...depths.values())+1)*320);
 dag.style.minHeight=canvasHeight+"px";
 const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
 svg.setAttribute("width",String(graphWidth));
@@ -67,11 +69,7 @@ const locations=new Map();
 const depthOf=new Map();
 nodes.forEach((n,i)=>{
   const parent=n.parent_id?locations.get(n.parent_id):null;
-  const depth=parent?parent.depth+1:0;
-  if(parent && graphWidth < 32+(depth+1)*320){
-    dag.style.minWidth=(32+(depth+1)*320)+"px";
-    svg.setAttribute("width",String(32+(depth+1)*320));
-  }
+  const depth=depths.get(n.identity)??0;
   const x=16+depth*320,y=10+i*84;
   locations.set(n.identity,{x,y,depth});
   const b=document.createElement("button");b.className="node";
