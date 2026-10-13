@@ -20,6 +20,7 @@ from urllib.request import Request, urlopen
 from .catalog import report
 from .engineering_flow import git_revision
 from .http_integration import Endpoint, call
+from .trace_spans import emit as trace_emit
 
 
 def invoke_model(config, prompt):
@@ -32,6 +33,8 @@ def invoke_model(config, prompt):
     req=Request(config["url"],data=data,method="POST",
                 headers={"Content-Type":"application/json",
                          "Authorization":"Bearer "+config["token"]})
+    span=trace_emit("model_call_started",{"model":config["model"],"prompt_sha256":hashlib.sha256(prompt.encode()).hexdigest()})
+    started=time.perf_counter_ns()
     with urlopen(req,timeout=config["timeout_seconds"]) as response:
         raw=response.read(config["max_response_bytes"]+1)
         if len(raw)>config["max_response_bytes"]:
@@ -40,6 +43,9 @@ def invoke_model(config, prompt):
     answer=result["choices"][0]["message"]["content"]
     if not isinstance(answer,str) or not answer.strip():
         raise ValueError("empty model response")
+    trace_emit("model_call_completed",{"model":config["model"],"latency_ms":round((time.perf_counter_ns()-started)/1e6,3),
+                 "response_sha256":hashlib.sha256(answer.encode()).hexdigest(),
+                 "usage":result.get("usage",{})},parent_id=span)
     return {"response":answer,"response_digest":hashlib.sha256(answer.encode()).hexdigest(),
             "model":config["model"],"usage":result.get("usage",{})}
 
