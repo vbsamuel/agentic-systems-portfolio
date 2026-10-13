@@ -20,6 +20,26 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn("VERIFIED_CANDIDATE_PERSISTED",text)
             self.assertNotIn("<script>alert(1)</script>",text)
             self.assertIn("Execution dependency graph",text)
+    def test_native_graph_renders_observed_parent_child_ids(self):
+        from agentic_portfolio.event_journal import EventJournal
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            source=root/"run.json"
+            source.write_text(json.dumps({"run_id":"observed-123","state":"PASS",
+                                          "stages":[],"engineering":{},"catalog":{}}))
+            journal=EventJournal(source.with_suffix(".events.sqlite3"))
+            parent=journal.append("observed-123","stage_started",{"name":"engineering"})
+            child=journal.append("observed-123","model_call_started",
+                                 {"model":"local-test-model"},parent_id=parent["event_id"])
+            out=build(source,root/"workbench.html")
+            html=out.read_text()
+            self.assertIn(parent["event_id"],html)
+            self.assertIn(child["event_id"],html)
+            self.assertIn('"schema_version": 2',html)
+            self.assertIn('"edge_type": "native_parent_id"',html)
+            self.assertIn('b.style.width="288px"',html)
+            self.assertIn('const x=16+depth*320',html)
+
     def test_reject_missing_run_identity(self):
         with tempfile.TemporaryDirectory() as td:
             source=Path(td)/"run.json"
