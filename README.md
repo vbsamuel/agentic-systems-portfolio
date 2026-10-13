@@ -1,5 +1,8 @@
 # Agentic Systems Portfolio
 
+> **License and commercial use:** **Proprietary — All Rights Reserved.** No Apache, MIT, or other open-source license is granted. Viewing the source is permitted; use, copying, modification, distribution, deployment, or commercial exploitation requires prior written permission from the copyright holder. Commercial use requires a separate **paid written license**. See [LICENSE](LICENSE). Contact the repository owner through GitHub for licensing inquiries.
+
+
 > **Verified operator result (2026-10-13): LOCAL_TWO_MODEL_VERTICAL_PASS.** [Release evidence record](LOCAL_RELEASE_2026-10-13.md) · [Operator procedure](OPERATOR_RELEASE.md) · [Six-gate contract](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). The actual operator command completed with `INTEGRATED_RELEASE_RC=0` under run `8b5d0b96-6c30-4ea3-8d01-9919e44052e6`. This closes the **local** two-model HTTP vertical. External customer production qualification remains **NOT_PERFORMED**. The generated run artifacts are on the operator's WSL machine and are not yet published or independently inspected in this repository.
 
 
