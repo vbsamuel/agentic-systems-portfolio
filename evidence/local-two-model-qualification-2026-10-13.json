@@ -1,0 +1,22 @@
+{
+  "approval_evidence_redacted": true,
+  "catalog_status": "VERIFIED",
+  "decision_digest": "13e0a8591e8f2e7111f7e6083f7e7f13494e9f2ddff515fb8e498457cefb4523",
+  "effect_id": "6db0b5eef81dd253dcd5a6cf434026e8fc99a12052f445846fda016a2e9860f4",
+  "engineer_base": "e8d09db7b4ab0eb5450bd6a6126f93fc2e68474d",
+  "engineer_candidate": "ce04a85fbc3deabd4b58b1717b825cf10fb9bee8",
+  "evidence_type": "SANITIZED_OPERATOR_QUALIFICATION",
+  "external_production_qualification": "NOT_PERFORMED",
+  "http_status": 200,
+  "journal_last_hash": "51adf86365cd34e6ec59022839cdc55d53378e4b11112d7f17814b9d3a3866ad",
+  "native_event_count": 74,
+  "native_git_calls": 13,
+  "native_http_calls": 10,
+  "native_model_invocations": 2,
+  "not_production_signoff": true,
+  "qualification": "LOCAL_TWO_MODEL_VERTICAL_PASS",
+  "run_id": "8b5d0b96-6c30-4ea3-8d01-9919e44052e6",
+  "source_report_sha256": "e746650d28049fbfa61b2cea36c199ab520151d3dd51aa074fea1749482bbd3b",
+  "stage_count": 6,
+  "trusted_reviewers_sha256": "3fdbe55614a11f59b22470e87c99cf2e0155dd65da3ca34e8925912536cf1a05"
+}
