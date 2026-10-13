@@ -42,6 +42,9 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn("function ancestorStage(n)",html)
             self.assertIn("function renderStageFlow()",html)
             self.assertIn("Show raw evidence JSON",html)
+            self.assertIn("Observed correction and publication",html)
+            self.assertIn("attempt ",html)
+            self.assertIn("Duration / result",html)
             self.assertIn("Evidence inspector",html)
             self.assertIn("Recorded stage flow",html)
 
