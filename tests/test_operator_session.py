@@ -26,9 +26,29 @@ class OperatorSessionTests(unittest.TestCase):
                 return result,release
     def test_refused_digest_causes_no_effect(self):
         with tempfile.TemporaryDirectory() as td:
-            result,release=self.invoke(td,"not-approved")
-            self.assertEqual(result["state"],"AWAITING_APPROVAL")
+            result,release=self.invoke(td,"reject")
+            self.assertEqual(result["state"],"REJECTED")
             release.assert_not_called()
+    def test_approved_word_authorizes_exact_bound_run(self):
+        with tempfile.TemporaryDirectory() as td:
+            result,release=self.invoke(td,"approved")
+            self.assertEqual(result["scope"],"LOCAL_TWO_MODEL_VERTICAL_PASS")
+            release.assert_called_once()
+            self.assertTrue(release.call_args.kwargs["confirmed"])
+
+    def test_defer_preserves_without_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            result,release=self.invoke(td,"3")
+            self.assertEqual(result["state"],"DEFERRED")
+            self.assertFalse(result["publication_performed"])
+            release.assert_not_called()
+
+    def test_unrecognized_response_rejected_without_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            result,release=self.invoke(td,"maybe")
+            self.assertEqual(result["state"],"INVALID_DECISION")
+            release.assert_not_called()
+
     def test_exact_digest_uses_same_run_for_single_release(self):
         with tempfile.TemporaryDirectory() as td:
             result,release=self.invoke(td,"approved-sha")
