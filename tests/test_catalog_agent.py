@@ -28,12 +28,12 @@ class CatalogAgentTests(unittest.TestCase):
         observations=[observation("1.00","a"),observation("2.00","b","v1")]
         response={"response":'{"action":"CORRECT","skus":["A"],"rationale":"price mismatch"}',
                   "model":"model","usage":{},"response_digest":"test"}
-        with patch("agentic_portfolio.catalog_agent.call",side_effect=observations), \\
-             patch("agentic_portfolio.catalog_agent.invoke_model",return_value=response), \\
-             patch("agentic_portfolio.http_integration.synchronize") as write:
-            outcome=model_governed_reconcile({},object(),object(),writeback=True,
-                                              approved_digest="not-the-decision")
-            write.assert_not_called()
+        with patch("agentic_portfolio.catalog_agent.call",side_effect=observations):
+            with patch("agentic_portfolio.catalog_agent.invoke_model",return_value=response):
+                with patch("agentic_portfolio.http_integration.synchronize") as write:
+                    outcome=model_governed_reconcile({},object(),object(),writeback=True,
+                                                      approved_digest="not-the-decision")
+                    write.assert_not_called()
         self.assertEqual(outcome["status"],"APPROVAL_MISMATCH")
         self.assertFalse(outcome["verified"])
 if __name__=="__main__":
