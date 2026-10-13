@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 from .workbench import PAGE
-from .causal_graph import normalize
+from .causal_graph import normalize, native_graph
 from .event_journal import EventJournal
 
 LIVE_SCRIPT = """
@@ -72,7 +72,16 @@ def handler_for(report, interval_ms):
                 return self.respond(200,"application/json",payload,hashlib.sha256(payload).hexdigest())
             if route=="/api/run":
                 return self.respond(200,"application/json",raw,digest)
-            data["execution_graph"]=normalize(data)
+            native_path=report.with_suffix(".events.sqlite3")
+            if native_path.is_file():
+                native_journal=EventJournal(native_path)
+                try:
+                    native_journal.verify()
+                except ValueError:
+                    return self.respond(409,"application/json",b'{"error":"journal_integrity_failure"}')
+                data["execution_graph"]=native_graph(data["run_id"],native_journal.read(data["run_id"]))
+            else:
+                data["execution_graph"]=normalize(data)
             escaped=json.dumps(data,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
             script=LIVE_SCRIPT.replace("__DIGEST__",json.dumps(digest)).replace("__POLL_INTERVAL__",str(interval_ms))
             page=PAGE.replace("__EVIDENCE__",escaped).replace("</script></body>",script+"</script></body>")
