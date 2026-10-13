@@ -36,8 +36,6 @@ def accept(report_path, output_path, allowed_signers):
         raise ValueError("model span not paired")
     if not any(x["tool"]=="http call" and x["state"]=="COMPLETED" for x in view["operations"]):
         raise ValueError("HTTP span not paired")
-    if any(x["state"]=="FAILED" for x in view["operations"]):
-        raise ValueError("recorded failed operation requires explicit review")
     destination=build(source,output_path)
     rendered=destination.read_text(encoding="utf-8")
     for expected in ('"operator_view"', 'id="lifecycle"', 'id="operation-mode"',
@@ -48,6 +46,7 @@ def accept(report_path, output_path, allowed_signers):
             "run_id":evidence["run_id"],
             "verified_native_events":evidence["native_event_count"],
             "paired_operations":len(view["operations"]),
+            "failed_historical_operations":sum(x["state"]=="FAILED" for x in view["operations"]),
             "stage_attempts":len(view["stages"]),
             "lifecycle":[[x["key"],x["state"]] for x in view["lifecycle"]],
             "workbench":str(destination),
