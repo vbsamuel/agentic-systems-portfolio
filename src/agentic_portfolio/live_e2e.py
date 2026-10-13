@@ -19,6 +19,7 @@ from .repair_agent import execute as execute_repair
 from .http_integration import Endpoint, synchronize
 from .catalog_agent import model_governed_reconcile
 from .event_journal import EventJournal
+from .trace_spans import stage_scope
 
 def atomic_json(path, value):
     target=Path(path)
@@ -60,13 +61,15 @@ def execute(config, output):
         nonlocal parent
         entry=journal.append(record["run_id"],kind,payload,parent_id=parent)
         parent=entry["event_id"]
+        return parent
     emit("execution_started",{"state":record["state"],"resuming":bool(prior)})
     atomic_json(output,record)
     def step(name, action):
         beginning=time.perf_counter_ns()
-        emit("stage_started",{"name":name})
+        stage_parent=emit("stage_started",{"name":name})
         try:
-            result=action()
+            with stage_scope(journal,record["run_id"],stage_parent):
+                result=action()
             stage={"name":name,"state":"COMPLETED","elapsed_ms":round((time.perf_counter_ns()-beginning)/1e6,3)}
             if isinstance(result,dict): stage["outcome"]=result.get("status",result.get("verified"))
             record["stages"].append(stage)
