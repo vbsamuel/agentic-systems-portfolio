@@ -39,7 +39,11 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn('"edge_type": "native_parent_id"',html)
             self.assertIn("Search recorded events",html)
             self.assertIn("Parent event",html)
+            self.assertIn("function ancestorStage(n)",html)
+            self.assertIn("function renderStageFlow()",html)
+            self.assertIn("Show raw evidence JSON",html)
             self.assertIn("Evidence inspector",html)
+            self.assertIn("Recorded stage flow",html)
 
     def test_reject_missing_run_identity(self):
         with tempfile.TemporaryDirectory() as td:
