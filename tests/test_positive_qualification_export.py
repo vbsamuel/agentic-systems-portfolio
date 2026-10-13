@@ -40,14 +40,39 @@ class PositiveQualificationExportTests(unittest.TestCase):
                        expires_at=int(time.time())+600)
             report=root/"run.json"
             journal=EventJournal(report.with_suffix(".events.sqlite3"))
-            for kind in ("execution_started","stage_started",
-                         "git_call_started","validation_completed",
-                         "model_call_started","model_call_completed",
-                         "stage_completed","stage_started","http_call_started",
-                         "http_call_completed","model_call_started",
-                         "model_call_completed","http_call_started",
-                         "http_call_completed","execution_finalized"):
-                journal.append("run-real",kind,{"name":kind})
+            stages=None
+            started={}
+            calls={
+                "git_call_completed":"git_call_started",
+                "validation_completed":"validation_started",
+                "model_call_completed":"model_call_started",
+                "http_call_completed":"http_call_started"}
+            kinds=("execution_started","stage_started","git_call_started",
+                   "git_call_completed","validation_started","validation_completed",
+                   "model_call_started","model_call_completed","stage_completed",
+                   "stage_started","http_call_started","http_call_completed",
+                   "model_call_started","model_call_completed","http_call_started",
+                   "http_call_completed","execution_finalized")
+            root_id=None
+            for kind in kinds:
+                if kind=="execution_started":
+                    parent=None
+                elif kind=="stage_started":
+                    parent=root_id
+                elif kind in started or kind.endswith("_started"):
+                    parent=stages
+                elif kind in calls:
+                    parent=started[calls[kind]]
+                else:
+                    parent=stages or root_id
+                entry=journal.append("run-real",kind,{"name":kind},parent_id=parent)
+                if kind=="execution_started":
+                    root_id=entry["event_id"]
+                if kind=="stage_started":
+                    stages=entry["event_id"]
+                if kind in ("git_call_started","validation_started",
+                            "model_call_started","http_call_started"):
+                    started[kind]=entry["event_id"]
             effect_id=hashlib.sha256(b"run-real|reviewed").hexdigest()
             ledger=EffectLedger(report.with_suffix(".effects.sqlite3"))
             ledger.prepare(effect_id,"run-real","reviewed",{"desired_products":[],"previous_products":[]})
