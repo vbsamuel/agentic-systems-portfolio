@@ -6,6 +6,8 @@ operator confirms the exact model decision digest after reviewing the findings.
 import argparse
 import json
 import uuid
+import threading
+import time
 from pathlib import Path
 from .operator_review import prepare
 from .operator_release import qualify
@@ -44,7 +46,32 @@ def session(base_config,root,reviewer,ssh_private_key,allowed_signers,
         runtime=directory/"runtime.json"
         report=directory/"run.json"
         print(json.dumps({"phase":"REVIEW_STARTED","report":str(report)}),flush=True)
-        review=prepare(base_config,workspace,runtime,report)
+        stop=threading.Event()
+        started=time.monotonic()
+        def heartbeat():
+            while not stop.wait(15):
+                phase="engineering model or validation"
+                try:
+                    if report.exists():
+                        snapshot=json.loads(report.read_text(encoding="utf-8"))
+                        if (snapshot.get("engineering") or {}).get("status")=="VERIFIED_CANDIDATE_PERSISTED":
+                            phase="catalog model or reconciliation"
+                except (OSError, ValueError):
+                    pass
+                print(json.dumps({"phase":"EXECUTION_IN_PROGRESS","operation":phase,
+                                  "elapsed_seconds":int(time.monotonic()-started),
+                                  "report":str(report)}),flush=True)
+        watcher=threading.Thread(target=heartbeat,daemon=True)
+        watcher.start()
+        try:
+            review=prepare(base_config,workspace,runtime,report)
+        except KeyboardInterrupt:
+            print(json.dumps({"phase":"INTERRUPTED","report":str(report),
+                              "note":"Inspect preserved run; no approval was granted."}),flush=True)
+            raise
+        finally:
+            stop.set()
+            watcher.join(timeout=2)
     result=json.loads(report.read_text(encoding="utf-8"))
     catalog=result["catalog"]
     decision=catalog["decision"]
