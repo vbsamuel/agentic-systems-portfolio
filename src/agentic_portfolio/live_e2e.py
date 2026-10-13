@@ -89,7 +89,7 @@ def execute(config, output):
     if model_catalog:
         catalog_result=step("catalog_real_model_decision_and_conditional_publication",
             lambda:model_governed_reconcile(
-                config["model_endpoint"],
+                config.get("catalog_model_endpoint", config["model_endpoint"]),
                 Endpoint(**catalog["authoritative"]),
                 Endpoint(**catalog["published"]),
                 writeback=policy["catalog_writeback"],
