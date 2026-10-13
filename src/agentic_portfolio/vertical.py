@@ -65,6 +65,8 @@ def run(configuration, output):
             "catalog_model_driven":configuration.get("catalog_model_driven",False),
             "catalog_approved_digest":configuration.get("catalog_approved_digest"),
             "catalog_authority_policy":configuration.get("catalog_authority_policy"),
+            "catalog_approval_grant":configuration.get("catalog_approval_grant"),
+            "approval_verification_key":configuration.get("approval_verification_key"),
             "resume_verified_engineering":configuration.get("resume_verified_engineering",False)
         }
         result=execute(config,output)
