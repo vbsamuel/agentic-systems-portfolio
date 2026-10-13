@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 from .workbench import PAGE
+from .causal_graph import normalize
 
 LIVE_SCRIPT = """
 const notice=document.createElement("span");
@@ -58,6 +59,7 @@ def handler_for(report, interval_ms):
             digest=hashlib.sha256(raw).hexdigest()
             if route=="/api/run":
                 return self.respond(200,"application/json",raw,digest)
+            data["execution_graph"]=normalize(data)
             escaped=json.dumps(data,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
             script=LIVE_SCRIPT.replace("__DIGEST__",json.dumps(digest)).replace("__POLL_INTERVAL__",str(interval_ms))
             page=PAGE.replace("__EVIDENCE__",escaped).replace("</script></body>",script+"</script></body>")
