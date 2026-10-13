@@ -11,6 +11,7 @@ from .integrated_run import invoke_model
 from .http_integration import call
 from .catalog import report
 from .approval_grants import verify as verify_approval
+from .ssh_approval import verify as verify_ssh_approval
 
 def decide(model_config, source, published, authority_policy=None):
     findings=report(source["body"],published["body"])
@@ -57,7 +58,24 @@ def decide(model_config, source, published, authority_policy=None):
             "response_digest":response["response_digest"],"before":findings}
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
-                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None,frozen_proposal=None):
+                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None,frozen_proposal=None,approval_allowed_signers=None):
+    def authorize():
+        if approval_grant is None or not run_id:
+            return False
+        try:
+            if approval_grant.get("auth_type")=="openssh":
+                if not approval_allowed_signers:
+                    return False
+                verify_ssh_approval(approval_allowed_signers,approval_grant,
+                                    run_id=run_id,decision_digest=approved_digest)
+            else:
+                if not approval_key:
+                    return False
+                verify_approval(approval_key,approval_grant,run_id=run_id,
+                                decision_digest=approved_digest)
+        except (ValueError,KeyError,TypeError):
+            return False
+        return True
     # Before re-invoking any model, reconcile a previously PREPARED effect.
     # A crashed publisher may have committed remotely without recording ACK.
     if writeback and run_id and approved_digest and effect_ledger_path:
@@ -67,15 +85,9 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         if prior is not None:
             if (prior["run_id"]!=run_id or prior["decision_digest"]!=approved_digest):
                 raise ValueError("existing publication intent identity mismatch")
-            if not approval_key or approval_grant is None:
-                return {"status":"AUTHENTICATED_APPROVAL_REQUIRED","verified":False,
-                        "writeback_performed":False}
-            try:
-                verify_approval(approval_key,approval_grant,run_id=run_id,
-                                decision_digest=approved_digest)
-            except ValueError:
-                return {"status":"AUTHENTICATED_APPROVAL_REJECTED","verified":False,
-                        "writeback_performed":False}
+            if not authorize():
+                return {"status":"AUTHENTICATED_APPROVAL_REJECTED",
+                        "verified":False,"writeback_performed":False}
             latest_source=call(catalog_endpoint)
             latest_channel=call(channel_endpoint)
             if latest_source["sha256"]!=prior["intent"]["source_sha256"]:
@@ -103,14 +115,9 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
     if approved_digest!=outcome["decision_digest"]:
         outcome.update(verified=False,writeback_performed=False,status="APPROVAL_MISMATCH")
         return outcome
-    if approval_grant is None or not approval_key or not run_id:
-        outcome.update(verified=False,writeback_performed=False,status="AUTHENTICATED_APPROVAL_REQUIRED")
-        return outcome
-    try:
-        verify_approval(approval_key,approval_grant,run_id=run_id,
-                        decision_digest=outcome["decision_digest"])
-    except ValueError:
-        outcome.update(verified=False,writeback_performed=False,status="AUTHENTICATED_APPROVAL_REJECTED")
+    if not authorize():
+        outcome.update(verified=False,writeback_performed=False,
+                       status="AUTHENTICATED_APPROVAL_REJECTED")
         return outcome
     # Re-read source and channel before a version-controlled write. A changed
     # observation invalidates the approved decision and requires fresh approval.
