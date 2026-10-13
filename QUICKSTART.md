@@ -206,6 +206,35 @@ target operator viewport. A generated HTML file alone is not browser
 qualification. Production PIM/CMS integration is not included in this
 local evidence-workbench release.
 
+## One-command complete workbench acceptance (no model calls or writes)
+
+After an operator session has already returned `LOCAL_TWO_MODEL_VERTICAL_PASS`,
+run this **single read-only closure command** against its preserved directory.
+It independently re-checks the signed reviewer grant, Git candidate, native
+hash-linked journal, durable verified effect and final readback; checks the
+five-phase lifecycle and paired model/HTTP spans; then rebuilds the UI.
+
+```bash
+cd ~/agentic-systems-portfolio
+
+RUN_DIR="artifacts/operator-runs/7afab186563b4893834dbeaff71cee78"
+PYTHONPATH=src python3 -m agentic_portfolio.operator_workbench_acceptance \
+  --report "$RUN_DIR/run.json" \
+  --output "$RUN_DIR/workbench.html" \
+  --allowed-signers "$HOME/.config/agentic-systems-portfolio/allowed_signers"
+ACCEPTANCE_RC=$?
+printf 'OPERATOR_WORKBENCH_ACCEPTANCE_RC=%s\n' "$ACCEPTANCE_RC"
+```
+
+Expected successful classification: `LOCAL_OPERATOR_WORKBENCH_VERTICAL` and
+return code 0, with the exact run ID, five lifecycle states, count of original
+native events, count of paired operations, and rebuilt HTML path.
+Failures remain `BLOCKED` and return code 2. This command **never** invokes
+a model or HTTP PUT; it only revalidates existing local artifacts.
+Opening the HTML in Chrome is still necessary to verify browser layout and
+interactions: automated evidence acceptance is not a claim of visual
+publisher-quality acceptance.
+
 ## Recovery without starting from scratch
 
 **Catalog model returned an empty response or failed after engineering verified:** Use the **exact failed report path** from the `REVIEW_STARTED` output:
