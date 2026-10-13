@@ -113,7 +113,7 @@ printf 'INTEGRATED_RELEASE_RC=%s\n' "$RELEASE_RC"
 
 The command prints `REVIEW_STARTED` with a new report path. Engineering runs real tests, uses the configured model to propose a code repair, revalidates the candidate and preserves it as a Git ref. The catalog agent observes the bundled local authoritative/published product records and requests a separate model decision.
 
-**At `AWAITING_OPERATOR`:** Read `decision`, `findings`, proposed SKU and value, and `digest`. Enter the **exact displayed digest** only if you approve the specific local mutation. Any other text declines the operation. Do **not** approve unfamiliar data or a customer endpoint. A positive local example may show SKU `P-1` with published `119.00` versus authoritative `100.00`; those values are illustrative configuration, not a universal rule.
+**At `AWAITING_OPERATOR`:** Read `decision`, `findings`, proposed SKU and value, and `digest`. The CLI explicitly offers **[1] APPROVE**, **[2] REJECT**, and **[3] DEFER**. Type `1`, `approve`, `approved`, or `accept` to authorize the exact reviewed local change. Type `2`/`reject` or `3`/`defer` for a deliberate no-write outcome. The signed reviewer grant remains bound to the displayed run ID and proposal digest. Do not approve unfamiliar data or a customer endpoint. Explicit rejection or deferral returns exit code 0 **without** a release PASS; this is not a qualification. Do **not** approve unfamiliar data or a customer endpoint. A positive local example may show SKU `P-1` with published `119.00` versus authoritative `100.00`; those values are illustrative configuration, not a universal rule.
 
 On success, the program prints `status: PASS`, `scope: LOCAL_TWO_MODEL_VERTICAL_PASS`, `run_id`, `evidence`, `workbench`, and `external_production_qualification: NOT_PERFORMED`. **Only a real completed output with exit code 0 is PASS.**
 
@@ -205,7 +205,7 @@ printf 'RELEASE_RC=%s\n' "$?"
 | `REVIEW_STARTED` | New private execution allocated | Wait for model and validation |
 | `CATALOG_RECOVERY` | Existing verified engineering reused | Wait for catalog decision |
 | `AWAITING_OPERATOR` | A real proposal awaits explicit approval | Review findings, decide |
-| `AWAITING_APPROVAL` / `BLOCKED` | Not approved or acceptance failed | Inspect preserved report; no PASS |
+| `REJECTED` / `DEFERRED`, RC 0 | Explicit no-write decision (not a PASS) | Preserve run; no publication |\n| `INVALID_DECISION` / `BLOCKED`, RC 2 | Bad input or actual acceptance failure | Inspect preserved report; no PASS |
 | `LOCAL_TWO_MODEL_VERTICAL_PASS`, RC 0 | Local integrated qualification completed | Open evidence and workbench |
 | `NOT_PERFORMED` (external) | No customer production validation | Do not claim production release |
 
