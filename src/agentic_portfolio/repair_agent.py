@@ -33,6 +33,23 @@ def parse_proposal(raw):
         raise ValueError("no-op proposal")
     return proposal
 
+def run_isolated_check(command, directory, timeout):
+    """Prevent stale Python bytecode from masking a same-size, same-second edit.
+
+    Python timestamp caches can reuse a compiled module when the modification
+    timestamp and source length remain unchanged. Each verification invocation
+    receives a new PYTHONPYCACHEPREFIX, so imports must compile current source.
+    """
+    with tempfile.TemporaryDirectory(prefix="agent-bytecode-") as cache:
+        environment = os.environ.copy()
+        environment["PYTHONPYCACHEPREFIX"] = cache
+        result = subprocess.run(command, cwd=directory, timeout=timeout,
+                                capture_output=True, text=True, check=False,
+                                env=environment)
+        return {"command":command, "exit_code":result.returncode,
+                "stdout":result.stdout[-16000:], "stderr":result.stderr[-16000:]}
+
+
 def execute(config, *, approve=False):
     spec = config["engineering"]
     source = Path(spec["repository"]).resolve(strict=True)
@@ -52,7 +69,7 @@ def execute(config, *, approve=False):
         git(source, "worktree", "add", "--detach", str(checkout), head)
         try:
             started = time.perf_counter()
-            baseline = run_command(command, str(checkout), timeout)
+            baseline = run_isolated_check(command, str(checkout), timeout)
             events.append({"stage":"baseline_reproduction","result":baseline})
             if baseline["exit_code"] == 0:
                 raise ValueError("baseline tests already pass; no observed defect")
@@ -90,7 +107,7 @@ def execute(config, *, approve=False):
                 raise ValueError("mutation escaped declared scope")
             diff = git(checkout,"diff","--",rel)
             events.append({"stage":"actual_mutation","changed_files":changed,"diff":diff})
-            check = run_command(command, str(checkout), timeout)
+            check = run_isolated_check(command, str(checkout), timeout)
             events.append({"stage":"independent_test_execution","result":check})
             if check["exit_code"] != 0:
                 return {"status":"FAILED_VERIFICATION","base_revision":head,
