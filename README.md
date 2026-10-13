@@ -1,5 +1,7 @@
 # Agentic Systems Portfolio
 
+> **Controlling release contract:** [One integrated vertical, six indivisible acceptance gates](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). A local passing workflow or isolated feature test is not a production release. The operator-approved external publishing effect and external service qualification remain open.
+
 > **Latest workbench tranche:** [Evidence-driven graph and monitor](LIVE_MONITOR.md) now derive displayed stage nodes, unique identities, and recorded sequence links from actual run JSON. Historical ordering must not be mistaken for independently instrumented distributed causality. [Graph normalization](src/agentic_portfolio/causal_graph.py) · [Tests](tests/test_causal_graph.py). The two-model publication is still awaiting separately granted operator approval.
 
 > **Operator entry points (current):** [Live two-model vertical](TWO_MODEL_VERTICAL.md) · [Evidence-driven execution workbench and publication closure](WORKBENCH_AND_CLOSURE.md) · [Observed qualification](evidence/2026-10-13-two-agent-vertical-qualification.md). The latest two-model catalog run is **AWAITING_APPROVAL**, not a completed publication.
