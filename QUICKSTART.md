@@ -155,6 +155,24 @@ PY
 
 Open the printed `workbench.html` in your browser from WSL or Windows. It is a local HTML artifact; the execution journal is a separate persisted SQLite file. The `artifacts/` outputs are **ignored by Git** and should remain private. The reviewed, sanitized public example is at [evidence/local-two-model-qualification-2026-10-13.json](evidence/local-two-model-qualification-2026-10-13.json).
 
+## Workbench navigation
+
+The offline workbench is an **operator evidence console**, not an editable workflow graph or a live control plane. It groups engineering, catalog and orchestration summaries above a searchable native-event table. Select an event to inspect its observed payload, stable event ID and recorded parent ID. Filter by lane or search event descriptions/IDs to investigate tool execution. Times are local display conversions of the recorded nanosecond timestamps.
+
+For the latest local run, regenerate the HTML **without any model inference or publication**:
+
+```bash
+cd ~/agentic-systems-portfolio
+
+RUN_DIR="artifacts/operator-runs/7afab186563b4893834dbeaff71cee78"
+PYTHONPATH=src python3 -m agentic_portfolio.workbench \
+  --report "$RUN_DIR/run.json" \
+  --output "$RUN_DIR/workbench.html"
+printf 'WORKBENCH_RC=%s\n' "$?"
+```
+
+Replace `RUN_DIR` with your actual output path. The browser must be refreshed after regeneration. The journal is read and hash-verified; this viewer cannot mutate runs. Lane labels are UI classifications of observed event names and payloads, **not additional agent identities**. Parent IDs are actual journal relationships; the UI does not invent dependencies.
+
 ## Recovery without starting from scratch
 
 **Catalog model returned an empty response or failed after engineering verified:** Use the **exact failed report path** from the `REVIEW_STARTED` output:
