@@ -67,6 +67,7 @@ def execute(config, output):
     def step(name, action):
         beginning=time.perf_counter_ns()
         stage_parent=emit("stage_started",{"name":name})
+        print(json.dumps({"phase":"STAGE_STARTED","stage":name,"run_id":record["run_id"]}),flush=True)
         try:
             with stage_scope(journal,record["run_id"],stage_parent):
                 result=action()
@@ -74,6 +75,7 @@ def execute(config, output):
             if isinstance(result,dict): stage["outcome"]=result.get("status",result.get("verified"))
             record["stages"].append(stage)
             emit("stage_completed",stage)
+            print(json.dumps({"phase":"STAGE_COMPLETED","stage":name,"elapsed_ms":stage["elapsed_ms"]}),flush=True)
             atomic_json(output,record)
             return result
         except Exception as error:
@@ -82,6 +84,7 @@ def execute(config, output):
                 "elapsed_ms":round((time.perf_counter_ns()-beginning)/1e6,3)})
             record["state"]="FAILED"
             emit("stage_failed",record["stages"][-1])
+            print(json.dumps({"phase":"STAGE_FAILED","stage":name,"error":record["stages"][-1]["error"]}),flush=True)
             atomic_json(output,record)
             raise
 
