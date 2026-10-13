@@ -19,6 +19,7 @@ class EffectLedger:
     def db(self):
         db=sqlite3.connect(self.path,timeout=15,isolation_level=None)
         db.execute("PRAGMA journal_mode=WAL")
+        db.execute("PRAGMA synchronous=FULL")
         return db
     def prepare(self,effect_id,run_id,decision_digest,intent):
         with self.db() as db:
