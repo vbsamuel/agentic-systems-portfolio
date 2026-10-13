@@ -13,7 +13,7 @@ from .catalog import report
 from .approval_grants import verify as verify_approval
 from .ssh_approval import verify as verify_ssh_approval
 
-def decide(model_config, source, published, authority_policy=None):
+def decide(model_config, source, published, authority_policy=None, frozen_proposal=None):
     findings=report(source["body"],published["body"])
     authority_policy=authority_policy or {}
     prompt=json.dumps({"authority_policy":authority_policy,"instruction":"Return ONLY JSON with keys action, skus, rationale. action must be either CORRECT or ESCALATE. Choose CORRECT for a discrepancy only when authority_policy explicitly identifies the authoritative catalog as the trusted record, the affected fields are allowlisted, and identities are unambiguous. Otherwise choose ESCALATE. Do not invent product data. skus must be an array of product identifiers affected by the findings.",
