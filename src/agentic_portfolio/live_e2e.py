@@ -18,6 +18,7 @@ from pathlib import Path
 from .repair_agent import execute as execute_repair
 from .http_integration import Endpoint, synchronize
 from .catalog_agent import model_governed_reconcile
+from .event_journal import EventJournal
 
 def atomic_json(path, value):
     target=Path(path)
@@ -52,14 +53,24 @@ def execute(config, output):
         record["state"]="RUNNING"
         record["stages"].append({"name":"resume_verified_engineering","state":"REUSED",
                                   "outcome":candidate["candidate_revision"]})
+    journal=EventJournal(str(Path(output).with_suffix(".events.sqlite3")))
+    last=journal.read(record["run_id"])
+    parent=last[-1]["event_id"] if last else None
+    def emit(kind,payload):
+        nonlocal parent
+        entry=journal.append(record["run_id"],kind,payload,parent_id=parent)
+        parent=entry["event_id"]
+    emit("execution_started",{"state":record["state"],"resuming":bool(prior)})
     atomic_json(output,record)
     def step(name, action):
         beginning=time.perf_counter_ns()
+        emit("stage_started",{"name":name})
         try:
             result=action()
             stage={"name":name,"state":"COMPLETED","elapsed_ms":round((time.perf_counter_ns()-beginning)/1e6,3)}
             if isinstance(result,dict): stage["outcome"]=result.get("status",result.get("verified"))
             record["stages"].append(stage)
+            emit("stage_completed",stage)
             atomic_json(output,record)
             return result
         except Exception as error:
@@ -67,6 +78,7 @@ def execute(config, output):
                 "error":type(error).__name__+": "+str(error),
                 "elapsed_ms":round((time.perf_counter_ns()-beginning)/1e6,3)})
             record["state"]="FAILED"
+            emit("stage_failed",record["stages"][-1])
             atomic_json(output,record)
             raise
 
@@ -78,6 +90,7 @@ def execute(config, output):
         step("engineering_real_model_to_git_repair",
             lambda:execute_repair(config,approve=policy["engineering_worktree_mutation"])))
     record["engineering"]=engineering
+    emit("engineering_outcome",{"status":engineering.get("status"),"candidate_revision":engineering.get("candidate_revision")})
     atomic_json(output,record)
     if engineering["status"]!="VERIFIED_CANDIDATE_PERSISTED":
         record["state"]="BLOCKED_ENGINEERING"
@@ -101,11 +114,16 @@ def execute(config, output):
                                Endpoint(**catalog["published"]),
                                writeback=policy["catalog_writeback"]))
     record["catalog"]=catalog_result
+    emit("catalog_outcome",{"status":catalog_result.get("status"),"verified":catalog_result.get("verified"),
+                            "writeback_performed":catalog_result.get("writeback_performed",False),
+                            "decision_digest":catalog_result.get("decision_digest")})
     catalog_ok=catalog_result["verified"] and (
         (catalog_result.get("before",{}).get("status")=="PASS" and not model_catalog)
         or catalog_result.get("writeback_performed",False))
     record["state"]="PASS" if catalog_ok else "BLOCKED_CATALOG"
     record["finished_at"]=datetime.now(timezone.utc).isoformat()
+    emit("execution_finalized",{"state":record["state"]})
+    record["event_journal"]=journal.path
     atomic_json(output,record)
     return record
 
