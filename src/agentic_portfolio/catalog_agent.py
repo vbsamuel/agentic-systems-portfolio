@@ -99,7 +99,8 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
                     "scope":approval_grant["scope"],
                     "expires_at":approval_grant["expires_at"],
                     "signature_sha256":hashlib.sha256(approval_grant["signature"].encode()).hexdigest(),
-                    "auth_type":approval_grant.get("auth_type","local_hmac")}
+                    "auth_type":approval_grant.get("auth_type","local_hmac"),
+        "signed_grant":approval_grant if approval_grant.get("auth_type")=="openssh" else None}
                 return {"approval_evidence":approval_evidence,
                         "status":"VERIFIED_RECOVERED","verified":True,
                         "writeback_performed":False,"effect_recovered":True,
@@ -131,7 +132,8 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         "scope":approval_grant["scope"],
         "expires_at":approval_grant["expires_at"],
         "signature_sha256":hashlib.sha256(approval_grant["signature"].encode()).hexdigest(),
-        "auth_type":approval_grant.get("auth_type","local_hmac")}
+        "auth_type":approval_grant.get("auth_type","local_hmac"),
+        "signed_grant":approval_grant if approval_grant.get("auth_type")=="openssh" else None}
     # Re-read source and channel before a version-controlled write. A changed
     # observation invalidates the approved decision and requires fresh approval.
     live_source=call(catalog_endpoint)
