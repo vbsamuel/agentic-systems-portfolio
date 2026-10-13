@@ -1,16 +1,7 @@
 # Agentic Systems Portfolio
 
-> **Current integrated release:** [One operator command, one two-model run](OPERATOR_RELEASE.md) · [Six-gate acceptance oracle](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md) · [Native execution workbench](LIVE_MONITOR.md). The runtime now supports native model/Git/HTTP spans, real causal journal edges, signed reviewer approval, persisted no-blind-retry publication effects and strict machine evidence export. The new tranche awaits WSL qualification; external customer production use is not claimed.
+> **Verified operator result (2026-10-13): LOCAL_TWO_MODEL_VERTICAL_PASS.** [Release evidence record](LOCAL_RELEASE_2026-10-13.md) · [Operator procedure](OPERATOR_RELEASE.md) · [Six-gate contract](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). The actual operator command completed with `INTEGRATED_RELEASE_RC=0` under run `8b5d0b96-6c30-4ea3-8d01-9919e44052e6`. This closes the **local** two-model HTTP vertical. External customer production qualification remains **NOT_PERFORMED**. The generated run artifacts are on the operator's WSL machine and are not yet published or independently inspected in this repository.
 
-> **Current operator release entry point:** [OPERATOR_RELEASE.md](OPERATOR_RELEASE.md) contains the one-command approved local two-model vertical: preserved DeepSeek Git candidate → independently signed SSH review → frozen decision verification → durable HTTP effect → crash reconciliation → actual native child spans → journal DAG → strict machine-generated qualification evidence. The operator must authorize the specific local correction. This implementation has not yet been verified by a new WSL regression, and external production qualification requires a customer-approved HTTPS service and identity trust.
-
-> **Controlling release contract:** [One integrated vertical, six indivisible acceptance gates](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). A local passing workflow or isolated feature test is not a production release. The operator-approved external publishing effect and external service qualification remain open.
-
-> **Latest workbench tranche:** [Evidence-driven graph and monitor](LIVE_MONITOR.md) now derive displayed stage nodes, unique identities, and recorded sequence links from actual run JSON. Historical ordering must not be mistaken for independently instrumented distributed causality. [Graph normalization](src/agentic_portfolio/causal_graph.py) · [Tests](tests/test_causal_graph.py). The two-model publication is still awaiting separately granted operator approval.
-
-> **Operator entry points (current):** [Live two-model vertical](TWO_MODEL_VERTICAL.md) · [Evidence-driven execution workbench and publication closure](WORKBENCH_AND_CLOSURE.md) · [Observed qualification](evidence/2026-10-13-two-agent-vertical-qualification.md). The latest two-model catalog run is **AWAITING_APPROVAL**, not a completed publication.
-
-Two executable workflows with **explicit problem definitions, real automation paths and measurable acceptance boundaries**. These implementations are standalone portfolio code, not historical evidence of client production deployments.
 
 ## 1. Multi-agent engineering: defect-to-reviewed-verification
 
