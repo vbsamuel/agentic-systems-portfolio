@@ -11,8 +11,11 @@ only if `--approve` is present, captures the Git diff and executes the
 independent test command again. It rejects initially passing tests and
 unauthorized paths.
 
-The original repository is not modified. A verified result proves only a
-candidate repair in the worktree, **not a committed or deployed release**.
+The original branch and checked-out files are not modified. On successful
+verification, a real Git commit is created and retained under
+`refs/agentic-repairs/<candidate-sha>` in the original Git object database.
+Inspect it with `git show <candidate-sha>`; it is **not** merged, deployed,
+or considered approved for release.
 The model is untrusted; source files may contain adversarial instructions.
 Run only on a disposable trusted development machine. No OS-level sandbox
 or full agent security isolation has been implemented.
@@ -35,7 +38,8 @@ Use one JSON file **outside version control** containing:
     "repository": "/absolute/path/to/actual/defective/repository",
     "allowed_files": ["src/file_with_observed_defect.py"],
     "validation_command": ["python3", "-m", "unittest", "discover", "-s", "tests"],
-    "timeout_seconds": 120
+    "timeout_seconds": 120,
+    "commit_identity": {"name": "Engineering Agent", "email": "agent@example.invalid"}
   }
 }
 ```
@@ -57,7 +61,7 @@ PYTHONPATH=src python3 -m agentic_portfolio.repair_agent \
   --output artifacts/repair-execution.json --approve
 ```
 
-Every invocation makes a fresh model call. The second run does not execute
+An approved successful run returns `VERIFIED_CANDIDATE_PERSISTED` with the Git commit SHA, ref, diff and test evidence. Every invocation makes a fresh model call. The second run does not execute
 a cryptographically locked approval of the first run's proposal. Therefore
 this is still not a production-grade HITL approval mechanism; approval
 binding and candidate persistence are release blockers.
