@@ -210,7 +210,7 @@ local evidence-workbench release.
 
 After an operator session has already returned `LOCAL_TWO_MODEL_VERTICAL_PASS`,
 run this **single read-only closure command** against its preserved directory.
-It independently re-checks the signed reviewer grant, Git candidate, native
+It independently re-checks the signed reviewer grant **at the original journal-recorded completion timestamp** (historical audit validity, not a renewal or new authorization), Git candidate, native
 hash-linked journal, durable verified effect and final readback; checks the
 five-phase lifecycle and paired model/HTTP spans; then rebuilds the UI.
 
