@@ -93,15 +93,25 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
                     "published_etag":live_published["etag"]})
     outcome["effect_id"]=effect_id
     try:
-        published_result=synchronize(catalog_endpoint,channel_endpoint,writeback=True)
+        update=call(channel_endpoint,method="PUT",
+                    payload={"products":[dict(p) for p in live_source["body"]]},
+                    version=live_published["etag"])
+        confirmed=call(channel_endpoint)
+        final=report(live_source["body"],confirmed["body"])
+        if final["status"]!="PASS":
+            ledger.outcome(effect_id,"UNCERTAIN",{"update_status":update["status"],
+                                                  "observed_digest":confirmed["sha256"]})
+            outcome.update(verified=False,writeback_performed=True,status="FAILED_VERIFICATION",
+                           publish_evidence={"update_status":update["status"],"after":final})
+            return outcome
+        ledger.outcome(effect_id,"VERIFIED",{"update_status":update["status"],
+                                            "observed_digest":confirmed["sha256"]})
+        outcome.update(verified=True,writeback_performed=True,status="VERIFIED",
+                       publish_evidence={"update_status":update["status"],"after":final,
+                                         "catalog_digest":live_source["sha256"],
+                                         "channel_digest_after":confirmed["sha256"]})
+        return outcome
     except Exception:
         outcome.update(verified=False,writeback_performed=False,status="EFFECT_UNCERTAIN")
         return outcome
-    ledger.outcome(effect_id,"VERIFIED" if published_result["verified"] else "UNCERTAIN",
-                   {"update_status":published_result.get("update_status"),
-                    "verified":published_result["verified"]})
-    outcome.update(verified=published_result["verified"],
-                   writeback_performed=published_result["writeback_performed"],
-                   status="VERIFIED" if published_result["verified"] else "FAILED_VERIFICATION",
-                   publish_evidence=published_result)
-    return outcome
+
