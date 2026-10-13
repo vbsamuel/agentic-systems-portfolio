@@ -13,7 +13,7 @@ from .effect_ledger import EffectLedger
 from .ssh_approval import verify as verify_ssh_approval
 from .live_e2e import atomic_json
 
-def collect(report_path, allowed_signers=None):
+def collect(report_path, allowed_signers=None, *, historical=False):
     path=Path(report_path)
     report=json.loads(path.read_text(encoding="utf-8"))
     eng=report.get("engineering") or {}
@@ -78,9 +78,14 @@ def collect(report_path, allowed_signers=None):
         raise ValueError("release evidence refused: SSH identity-bound review evidence missing")
     if not allowed_signers or not approval.get("signed_grant"):
         raise ValueError("release evidence refused: independently verifiable SSH grant missing")
+    observed_time=None
+    if historical:
+        observed_time=events[-1]["created_ns"]//1_000_000_000
+        if observed_time<=0:
+            raise ValueError("historical approval requires native completion timestamp")
     verify_ssh_approval(allowed_signers,approval["signed_grant"],
                         run_id=report["run_id"],
-                        decision_digest=catalog["decision_digest"])
+                        decision_digest=catalog["decision_digest"],now=observed_time)
     effect_id=catalog.get("effect_id")
     if not effect_id:
         raise ValueError("release evidence refused: publication effect identity missing")
