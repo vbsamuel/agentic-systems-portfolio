@@ -52,3 +52,24 @@ durable parent/span IDs and measured tool events at write time.
 
 The monitor remains read-only. Starting the UI does not authorize publishing,
 claim crash-safe replay, or establish production reliability.
+
+## Native append-only execution journal
+
+New coordinator executions now write a sibling SQLite WAL journal next to
+the JSON report: `artifacts/two-model-review.events.sqlite3` for
+`artifacts/two-model-review.json`. Each event has a UUID event ID,
+run ID, native parent event ID, durable insertion sequence, nanosecond wall
+timestamp, payload and SHA-256 chained digest. The writer validates parents
+against the same run and the reader checks the complete hash chain.
+
+The read-only monitor exposes `GET /api/events`, which returns journal events
+for the report's run ID only after hash verification. It returns 404 for a
+historical report without a journal and 409 when integrity verification fails.
+Historical records are **not retroactively relabelled as native traces**.
+
+This is a real append-only stage journal, not yet an exactly-once side-effect
+transaction log or a cryptographically signed external attestation. The
+coordinator currently records start/completion of its stage boundaries;
+individual model token streams and tool processes still need native span
+instrumentation, and the graph UI currently visualizes historical stage
+normalization rather than rendering every native span.
