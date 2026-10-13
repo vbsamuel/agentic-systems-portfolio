@@ -1,5 +1,7 @@
 # Verified local two-model integrated release — 2026-10-13
 
+> **Historical release record.** This document records the **first** locally verified two-model release, run `8b5d0b96-6c30-4ea3-8d01-9919e44052e6`, and must not be interpreted as the latest software/test state. The later qualified operator workbench run is `cc4ec0f2-effd-441a-8ddd-951c18a590af`: the operator reported **76/76 tests PASS** and **LOCAL_OPERATOR_WORKBENCH_VERTICAL, RC 0**, with 64 hash-linked native events, 25 paired tool operations, three stage attempts, SSH-bound approval, observed local publication and independent readback. See the [current README](README.md) and [QUICKSTART](QUICKSTART.md) for operating instructions. External production remains **NOT_PERFORMED**. The public sanitized JSON under `evidence/` belongs to the earlier first-release run; the later local workbench run remains private on WSL.
+
 ## Release decision
 
 **LOCAL_TWO_MODEL_VERTICAL_PASS — operator observed.**
