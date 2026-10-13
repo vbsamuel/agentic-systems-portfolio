@@ -1,5 +1,7 @@
 # Agentic Systems Portfolio
 
+> **Current integrated release:** [One operator command, one two-model run](OPERATOR_RELEASE.md) · [Six-gate acceptance oracle](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md) · [Native execution workbench](LIVE_MONITOR.md). The runtime now supports native model/Git/HTTP spans, real causal journal edges, signed reviewer approval, persisted no-blind-retry publication effects and strict machine evidence export. The new tranche awaits WSL qualification; external customer production use is not claimed.
+
 > **Current operator release entry point:** [OPERATOR_RELEASE.md](OPERATOR_RELEASE.md) contains the one-command approved local two-model vertical: preserved DeepSeek Git candidate → independently signed SSH review → frozen decision verification → durable HTTP effect → crash reconciliation → actual native child spans → journal DAG → strict machine-generated qualification evidence. The operator must authorize the specific local correction. This implementation has not yet been verified by a new WSL regression, and external production qualification requires a customer-approved HTTPS service and identity trust.
 
 > **Controlling release contract:** [One integrated vertical, six indivisible acceptance gates](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). A local passing workflow or isolated feature test is not a production release. The operator-approved external publishing effect and external service qualification remain open.
