@@ -37,7 +37,13 @@ def prepare(base_config,workspace,private_config,report):
         (result.get("engineering") or {}).get("status")!="VERIFIED_CANDIDATE_PERSISTED" or
         catalog.get("status")!="AWAITING_APPROVAL" or
         catalog.get("decision",{}).get("action")!="CORRECT"):
-        raise ValueError("actual two-model review did not reach authorized CORRECT proposal")
+        raise ValueError(
+            "two-model review stopped: "
+            +"state="+str(result.get("state"))
+            +" engineering="+str((result.get("engineering") or {}).get("status"))
+            +" catalog="+str(catalog.get("status"))
+            +" decision="+str((catalog.get("decision") or {}).get("action"))
+            +" report="+str(artifact))
     return {"review":"READY","run_id":result["run_id"],
             "decision_digest":catalog["decision_digest"],
             "candidate_revision":result["engineering"]["candidate_revision"],
