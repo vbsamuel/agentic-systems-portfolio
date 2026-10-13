@@ -1,5 +1,7 @@
 # Agentic Systems Portfolio
 
+> **Latest workbench tranche:** [Evidence-driven graph and monitor](LIVE_MONITOR.md) now derive displayed stage nodes, unique identities, and recorded sequence links from actual run JSON. Historical ordering must not be mistaken for independently instrumented distributed causality. [Graph normalization](src/agentic_portfolio/causal_graph.py) · [Tests](tests/test_causal_graph.py). The two-model publication is still awaiting separately granted operator approval.
+
 > **Operator entry points (current):** [Live two-model vertical](TWO_MODEL_VERTICAL.md) · [Evidence-driven execution workbench and publication closure](WORKBENCH_AND_CLOSURE.md) · [Observed qualification](evidence/2026-10-13-two-agent-vertical-qualification.md). The latest two-model catalog run is **AWAITING_APPROVAL**, not a completed publication.
 
 Two executable workflows with **explicit problem definitions, real automation paths and measurable acceptance boundaries**. These implementations are standalone portfolio code, not historical evidence of client production deployments.
