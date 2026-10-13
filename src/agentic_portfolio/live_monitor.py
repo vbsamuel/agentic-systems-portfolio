@@ -19,6 +19,7 @@ notice.className="pill";
 notice.textContent="LIVE EVIDENCE · POLLING";
 document.querySelector("header").append(notice);
 let lastDigest=__DIGEST__;
+let lastNativeDigest=null;
 async function refresh(){
   try{
     const response=await fetch("/api/run",{cache:"no-store"});
@@ -26,7 +27,15 @@ async function refresh(){
     const body=await response.json();
     notice.textContent="LIVE · "+String(body.state||"UNKNOWN");
     const next=response.headers.get("X-Evidence-Digest");
-    if(next && next!==lastDigest)location.reload();
+    if(next && next!==lastDigest){location.reload();return;}
+    const events=await fetch("/api/events",{cache:"no-store"});
+    if(events.ok){
+      const nativeDigest=events.headers.get("X-Evidence-Digest");
+      if(lastNativeDigest && nativeDigest && nativeDigest!==lastNativeDigest){
+        location.reload();return;
+      }
+      lastNativeDigest=nativeDigest;
+    }
   }catch(error){notice.textContent="EVIDENCE DISCONNECTED";notice.title=String(error)}
 }
 setInterval(refresh,__POLL_INTERVAL__);
