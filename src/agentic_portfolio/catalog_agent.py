@@ -9,6 +9,7 @@ import json
 from .integrated_run import invoke_model
 from .http_integration import call
 from .catalog import report
+from .approval_grants import verify as verify_approval
 
 def decide(model_config, source, published, authority_policy=None):
     findings=report(source["body"],published["body"])
@@ -47,7 +48,7 @@ def decide(model_config, source, published, authority_policy=None):
             "response_digest":response["response_digest"],"before":findings}
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
-                             *,writeback=False,approved_digest=None,authority_policy=None):
+                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None):
     from .http_integration import synchronize
     source=call(catalog_endpoint)
     published=call(channel_endpoint)
@@ -59,6 +60,15 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         return outcome
     if approved_digest!=outcome["decision_digest"]:
         outcome.update(verified=False,writeback_performed=False,status="APPROVAL_MISMATCH")
+        return outcome
+    if approval_grant is None or not approval_key or not run_id:
+        outcome.update(verified=False,writeback_performed=False,status="AUTHENTICATED_APPROVAL_REQUIRED")
+        return outcome
+    try:
+        verify_approval(approval_key,approval_grant,run_id=run_id,
+                        decision_digest=outcome["decision_digest"])
+    except ValueError:
+        outcome.update(verified=False,writeback_performed=False,status="AUTHENTICATED_APPROVAL_REJECTED")
         return outcome
     # Re-read source and channel before a version-controlled write. A changed
     # observation invalidates the approved decision and requires fresh approval.
