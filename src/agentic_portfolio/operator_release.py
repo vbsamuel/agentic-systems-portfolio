@@ -20,7 +20,7 @@ def qualify(*,config,report,reviewer,ssh_private_key,allowed_signers,
     if completed["state"]!="PASS":
         raise ValueError("publication did not independently verify: "+
                          str((completed.get("catalog") or {}).get("status")))
-    evidence=collect(report)
+    evidence=collect(report,allowed_signers=allowed_signers)
     atomic_json(evidence_output,evidence)
     build(report,workbench_output)
     return {"scope":evidence["qualification"],"run_id":evidence["run_id"],
