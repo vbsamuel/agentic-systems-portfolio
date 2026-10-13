@@ -110,7 +110,8 @@ def execute(config, output):
                 authority_policy=config.get("catalog_authority_policy"),
                 approval_grant=config.get("catalog_approval_grant"),
                 approval_key=config.get("approval_verification_key"),
-                run_id=record["run_id"]))
+                run_id=record["run_id"],
+                effect_ledger_path=str(Path(output).with_suffix(".effects.sqlite3"))))
     else:
         catalog_result=step("catalog_live_http_reconcile_and_verify",
             lambda:synchronize(Endpoint(**catalog["authoritative"]),
