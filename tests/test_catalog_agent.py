@@ -14,7 +14,7 @@ class CatalogAgentTests(unittest.TestCase):
         result={"response":'{"action":"CORRECT","skus":["A"],"rationale":"observed price discrepancy"}',
                 "model":"model","usage":{"total_tokens":19},"response_digest":"modeldigest"}
         with patch("agentic_portfolio.catalog_agent.invoke_model",return_value=result):
-            first=decide({},source,channel)
+            first=decide({},source,channel,{"catalog_is_source_of_truth":True,"correctable_fields":["price"]})
             second=decide({},source,channel)
         self.assertEqual(first["decision_digest"],second["decision_digest"])
         self.assertEqual(first["before"]["findings"][0]["field"],"price")
@@ -23,7 +23,7 @@ class CatalogAgentTests(unittest.TestCase):
                   "model":"model","usage":{},"response_digest":"test"}
         with patch("agentic_portfolio.catalog_agent.invoke_model",return_value=response):
             with self.assertRaises(ValueError):
-                decide({},observation("1.00","a"),observation("2.00","b","v1"))
+                decide({},observation("1.00","a"),observation("2.00","b","v1"),{"catalog_is_source_of_truth":True,"correctable_fields":["price"]})
     def test_no_write_without_exact_approval(self):
         observations=[observation("1.00","a"),observation("2.00","b","v1")]
         response={"response":'{"action":"CORRECT","skus":["A"],"rationale":"price mismatch"}',
@@ -32,7 +32,8 @@ class CatalogAgentTests(unittest.TestCase):
             with patch("agentic_portfolio.catalog_agent.invoke_model",return_value=response):
                 with patch("agentic_portfolio.http_integration.synchronize") as write:
                     outcome=model_governed_reconcile({},object(),object(),writeback=True,
-                                                      approved_digest="not-the-decision")
+                                                      approved_digest="not-the-decision",
+                                                      authority_policy={"catalog_is_source_of_truth":True,"correctable_fields":["price"]})
                     write.assert_not_called()
         self.assertEqual(outcome["status"],"APPROVAL_MISMATCH")
         self.assertFalse(outcome["verified"])
