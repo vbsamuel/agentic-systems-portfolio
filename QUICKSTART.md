@@ -111,7 +111,7 @@ RELEASE_RC=$?
 printf 'INTEGRATED_RELEASE_RC=%s\n' "$RELEASE_RC"
 ```
 
-The command prints `REVIEW_STARTED` with a new report path. Engineering runs real tests, uses the configured model to propose a code repair, revalidates the candidate and preserves it as a Git ref. The catalog agent observes the bundled local authoritative/published product records and requests a separate model decision.
+The command prints `REVIEW_STARTED` with a new report path and then stage progress plus a 15-second heartbeat during lengthy local inference. Engineering runs real tests, uses the configured model to propose a code repair, revalidates the candidate and preserves it as a Git ref. The catalog agent observes the bundled local authoritative/published product records and requests a separate model decision.
 
 **At `AWAITING_OPERATOR`:** Read `decision`, `findings`, proposed SKU and value, and `digest`. The CLI explicitly offers **[1] APPROVE**, **[2] REJECT**, and **[3] DEFER**. Type `1`, `approve`, `approved`, or `accept` to authorize the exact reviewed local change. Type `2`/`reject` or `3`/`defer` for a deliberate no-write outcome. The signed reviewer grant remains bound to the displayed run ID and proposal digest. Do not approve unfamiliar data or a customer endpoint. Explicit rejection or deferral returns exit code 0 **without** a release PASS; this is not a qualification. Do **not** approve unfamiliar data or a customer endpoint. A positive local example may show SKU `P-1` with published `119.00` versus authoritative `100.00`; those values are illustrative configuration, not a universal rule.
 
