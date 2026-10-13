@@ -94,7 +94,14 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
                 return {"status":"SOURCE_DRIFT","verified":False,"writeback_performed":False}
             state=ledger.reconcile(prior_id,latest_channel["body"])
             if state=="VERIFIED":
-                return {"status":"VERIFIED_RECOVERED","verified":True,
+                approval_evidence={
+                    "reviewer":approval_grant["reviewer"],
+                    "scope":approval_grant["scope"],
+                    "expires_at":approval_grant["expires_at"],
+                    "signature_sha256":hashlib.sha256(approval_grant["signature"].encode()).hexdigest(),
+                    "auth_type":approval_grant.get("auth_type","local_hmac")}
+                return {"approval_evidence":approval_evidence,
+                        "status":"VERIFIED_RECOVERED","verified":True,
                         "writeback_performed":False,"effect_recovered":True,
                         "effect_id":prior_id,"decision_digest":approved_digest,
                         "publish_evidence":{"after":report(latest_source["body"],latest_channel["body"]),
