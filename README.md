@@ -1,25 +1,46 @@
 # Agentic Systems Portfolio
 
-Two independently written, runnable reference implementations illustrating engineering controls for agentic systems. **These examples do not establish historical production deployment.**
+Two executable workflows with **explicit problem definitions, real automation paths and measurable acceptance boundaries**. These implementations are standalone portfolio code, not historical evidence of client production deployments.
 
-## Multi-agent software engineering orchestration
+## 1. Multi-agent engineering: defect-to-reviewed-verification
 
-`src/agentic_portfolio/orchestrator.py` provides a SQLite-backed queue, repository-scoped single active writer, source-revision drift rejection, explicit validation outcomes, named human approval, and a hash-chained event record. The chain is tamper-evident against accidental changes, not tamperproof against an administrator who can rewrite the database. This is not a distributed scheduler, integrated coding agent, or CI system.
+**Problem.** Coding agents and CI systems can lose source-state consistency, race on the same repository and claim completion without an independent validation result.
 
-## Catalog-to-web content accuracy
+**Flow.** Work intake → source revision captured → transactional repository-scoped writer claim → executable test subprocess → revision drift check → evidence stored in event journal → named human approval or failed status.
 
-`src/agentic_portfolio/catalog.py` reconciles authoritative SKU records with published content, flags missing records and critical attribute discrepancies, rejects duplicate SKUs, and requires review of findings. It is deterministic, not an LLM semantic assessor or live web crawler.
+**Concrete components**
+- `src/agentic_portfolio/orchestrator.py`: SQLite-backed queue, guarded state transitions, single active writer per repository, hash-chain event verification.
+- `src/agentic_portfolio/engineering_flow.py`: actual Git revision inspection and bounded subprocess execution.
+- `tests/test_flows.py`: real temporary Git repositories, passing/failing checks and review controls.
 
-## Run
+**Scope limitations.** There is no LLM planner, independent code-writing agent, sandbox, remote distributed agent scheduling, or production CI connector. The Python command execution interface is for **trusted operator-supplied commands only**; it is not a security sandbox.
+
+## 2. Catalog accuracy: discrepancy-to-reviewed-closure
+
+**Problem.** Published product content diverges from a source-of-truth catalog, causing price, inventory and product-content inaccuracies that are expensive to review manually.
+
+**Flow.** CSV catalog + published snapshot intake → SKU identity reconciliation → field-level comparison → persistent exception case → human/operator correction outside the tool → independent re-read of both snapshots → block closure while mismatch remains → named reviewer and rationale.
+
+**Concrete components**
+- `src/agentic_portfolio/catalog.py`: deterministic product reconciliation, including high-risk pricing and availability differences.
+- `src/agentic_portfolio/catalog_flow.py`: real CSV adapters, SQLite discrepancy case state and closure revalidation.
+- `tests/test_flows.py`: discrepancy opened, premature closure rejected, corrected observation accepted.
+
+**Scope limitations.** No authenticated live PIM/CMS connectors, AI semantic matcher, correction writeback, or ongoing production monitoring is claimed.
+
+## Execute both systems
+
+Requires Python 3.10+ and Git. No network, external API or LLM key is required.
 
 ```bash
 git clone https://github.com/vbsamuel/agentic-systems-portfolio.git
 cd agentic-systems-portfolio
 PYTHONPATH=src python -m unittest discover -s tests -v
+PYTHONPATH=src python examples/run_workflows.py
 ```
 
-## Provenance and scope
+GitHub Actions runs the tests and both-workflow example on pushes and pull requests: [CI](.github/workflows/verify.yml).
 
-These are independent reference examples, not relabeled copies of `vbsamuel/ai-agents`, `vbsamuel/claude-code-flow`, or `auric`. See [PROVENANCE.md](PROVENANCE.md). Any upstream source incorporated later must preserve required attribution.
+## Evidence and authorship
 
-The repository does not verify production tenure, customers, throughput, impact, or implementation ownership of separately deployed systems. External APIs, authentication, real code execution, automated publication, and LLM matching are not implemented.
+See [PROVENANCE.md](PROVENANCE.md). This is newly authored reference code and does not relabel upstream forks as original work. Test results, deployments, users, production tenure and measurable business benefit are separate claims requiring operational evidence.
