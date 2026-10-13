@@ -14,7 +14,7 @@ from .workbench import build
 
 def accept(report_path, output_path, allowed_signers):
     source=Path(report_path)
-    evidence=collect(source, allowed_signers=allowed_signers)
+    evidence=collect(source, allowed_signers=allowed_signers, historical=True)
     report=json.loads(source.read_text(encoding="utf-8"))
     journal=EventJournal(source.with_suffix(".events.sqlite3"))
     journal.verify()
