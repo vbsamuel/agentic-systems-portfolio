@@ -79,11 +79,28 @@ def session(base_config,root,reviewer,ssh_private_key,allowed_signers,
         "run_id":result["run_id"],"candidate_sha":review["candidate_revision"],
         "decision":decision,"findings":catalog["before"]["findings"],
         "digest":catalog["decision_digest"]},indent=2),flush=True)
-    entered=confirm("To authorize the exact local publication, enter the decision digest: ").strip()
-    if entered!=catalog["decision_digest"]:
-        return {"state":"AWAITING_APPROVAL","run_id":result["run_id"],
+    print("Operator decision for the exact reviewed LOCAL catalog proposal:",flush=True)
+    print("  [1] APPROVE  - sign the bound proposal and publish to local HTTP service",flush=True)
+    print("  [2] REJECT   - no publication; retain the run for audit",flush=True)
+    print("  [3] DEFER    - no publication; retain the run for later review",flush=True)
+    print("Enter 1/approve/approved/accept, 2/reject, or 3/defer.",flush=True)
+    entered=confirm("Decision [1/2/3]: ").strip().lower()
+    approve_words={"1","approve","approved","accept","accepted","yes"}
+    reject_words={"2","reject","rejected","decline","declined","no"}
+    defer_words={"3","defer","deferred","later",""}
+    # The already-displayed immutable digest is bound into the verified SSH grant
+    # by qualify/close. Keep direct digest entry compatible with previous clients.
+    if entered in reject_words or entered in defer_words:
+        return {"state":"REJECTED" if entered in reject_words else "DEFERRED",
+                "run_id":result["run_id"],"report":str(report),
+                "private_config":str(runtime),"publication_performed":False,
+                "reason":"operator explicitly rejected the proposal" if entered in reject_words
+                         else "operator deferred approval"}
+    if entered not in approve_words and entered!=catalog["decision_digest"].lower():
+        return {"state":"INVALID_DECISION","run_id":result["run_id"],
                 "report":str(report),"private_config":str(runtime),
-                "reason":"operator did not authorize exact proposal"}
+                "publication_performed":False,
+                "reason":"unrecognized input; use 1/approve, 2/reject, or 3/defer"}
     return qualify(config=str(runtime),report=str(report),reviewer=reviewer,
                    ssh_private_key=ssh_private_key,allowed_signers=allowed_signers,
                    evidence_output=str(directory/"qualification.json"),
@@ -105,7 +122,7 @@ def main():
                        a.ssh_private_key,a.allowed_signers,
                        resume_report=a.resume_report)
         print(json.dumps(result))
-        return 0 if result.get("scope")=="LOCAL_TWO_MODEL_VERTICAL_PASS" else 2
+        return 0 if result.get("scope")=="LOCAL_TWO_MODEL_VERTICAL_PASS" or result.get("state") in ("REJECTED","DEFERRED") else 2
     except (Exception,KeyboardInterrupt) as exc:
         message=str(exc)
         print(json.dumps({"state":"BLOCKED","error_type":type(exc).__name__,
