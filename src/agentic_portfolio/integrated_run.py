@@ -35,14 +35,21 @@ def invoke_model(config, prompt):
                          "Authorization":"Bearer "+config["token"]})
     span=trace_emit("model_call_started",{"model":config["model"],"prompt_sha256":hashlib.sha256(prompt.encode()).hexdigest()})
     started=time.perf_counter_ns()
-    with urlopen(req,timeout=config["timeout_seconds"]) as response:
-        raw=response.read(config["max_response_bytes"]+1)
-        if len(raw)>config["max_response_bytes"]:
-            raise ValueError("model response exceeds configured byte limit")
-        result=json.loads(raw)
-    answer=result["choices"][0]["message"]["content"]
-    if not isinstance(answer,str) or not answer.strip():
-        raise ValueError("empty model response")
+    try:
+        with urlopen(req,timeout=config["timeout_seconds"]) as response:
+            raw=response.read(config["max_response_bytes"]+1)
+            if len(raw)>config["max_response_bytes"]:
+                raise ValueError("model response exceeds configured byte limit")
+            result=json.loads(raw)
+        answer=result["choices"][0]["message"]["content"]
+        if not isinstance(answer,str) or not answer.strip():
+            raise ValueError("empty model response")
+    except Exception as error:
+        trace_emit("model_call_failed",{"model":config["model"],
+                   "error_type":type(error).__name__,
+                   "duration_ms":round((time.perf_counter_ns()-started)/1e6,3)},
+                   parent_id=span)
+        raise
     trace_emit("model_call_completed",{"model":config["model"],"latency_ms":round((time.perf_counter_ns()-started)/1e6,3),
                  "response_sha256":hashlib.sha256(answer.encode()).hexdigest(),
                  "usage":result.get("usage",{})},parent_id=span)
