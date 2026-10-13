@@ -4,6 +4,28 @@
 
 > **Proprietary — All Rights Reserved.** Source availability does **not** grant permission to use, reproduce, modify, deploy or redistribute this software except as legally permitted. Prior written permission is required; commercial use requires a separately executed **paid license**. See [LICENSE](LICENSE). This repository is **not Apache-licensed or open source**.
 
+## Executive value proposition
+
+**Agentic Systems converts AI-generated recommendations into controlled, independently verified work.** The working local solution demonstrates two practical outcomes on one evidence-backed execution foundation: **repairing defective software** and **correcting published business data**. It reduces manual coordination steps by connecting model reasoning with bounded tool execution, verification, explicit human control and recorded evidence. Productivity savings and commercial ROI have **not** been quantified.
+
+## Two workflows: distinct outcomes and boundaries
+
+| | **Workflow 1 — Software defect remediation** | **Workflow 2 — Business-data reconciliation and correction** |
+|---|---|---|
+| **Problem solved** | A failing software test and defective source code | A mismatch between authoritative and published product records |
+| **AI responsibility** | Diagnose an observed failure and propose a bounded source-code edit | Evaluate observed SKU/field discrepancies against source-authority policy and propose `CORRECT` or `ESCALATE` |
+| **System actions** | Apply edit in isolated Git worktree; execute actual tests; persist verified Git candidate | Read authenticated source/channel HTTP records; require human review; conditionally PUT approved authoritative values; independently GET and compare |
+| **Human control** | Candidate remains subject to normal developer review, merge and deployment processes | Explicit, SSH-signed, proposal-bound approval required **before** publication; rejection/deferral performs no write |
+| **Verified deliverable** | Tested Git repair candidate, **not** an automatic merge or deployed release | Verified corrected data in the bundled local SQLite-backed HTTP publishing service |
+| **Outside its boundary** | Does not authorize catalog publication or deploy code to production | Does not edit source code, merge Git branches, or bypass operator authorization |
+| **Practical usefulness** | Streamlines defect diagnosis, correction and test verification | Improves data accuracy with accountable, authorized changes |
+
+**Current integrated demonstration:** The two workflows execute sequentially under one run identity: engineering verification first, followed by catalog review, signed authorization, local publication and independent readback. **The Git candidate is not itself a business-data correction**; the workflows retain separate assets, decisions, authorizations and acceptance conditions.
+
+### Shared execution infrastructure
+
+Both workflows are instrumented through the same **durable execution journal, native parent-linked tool/model spans, state and recovery controls, evidence-based acceptance, and read-only operator workbench**. These facilities unify observation and qualification without conflating Git remediation with business-record publication. The demonstrated local system requires **one human operator** for configuration and approval, plus a development workstation running Python, Git, OpenSSH, SQLite and locally served DeepSeek. That is an operational requirement, **not** a measured historical development-resource count.
+
 ## Current qualification (2026-10-13)
 
 | Scope | Observed result |
