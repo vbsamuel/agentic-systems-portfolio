@@ -7,7 +7,8 @@ import argparse
 import html
 import json
 from pathlib import Path
-from .causal_graph import normalize
+from .causal_graph import normalize, native_graph
+from .event_journal import EventJournal
 
 PAGE='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agent Execution | Evidence Workbench</title><style>
@@ -67,7 +68,13 @@ def build(report, output):
     evidence=json.loads(Path(report).read_text(encoding="utf-8"))
     if not isinstance(evidence,dict) or not evidence.get("run_id"):
         raise ValueError("run report lacks run_id")
-    evidence["execution_graph"]=normalize(evidence)
+    journal_path=Path(report).with_suffix(".events.sqlite3")
+    if journal_path.is_file():
+        journal=EventJournal(journal_path)
+        journal.verify()
+        evidence["execution_graph"]=native_graph(evidence["run_id"],journal.read(evidence["run_id"]))
+    else:
+        evidence["execution_graph"]=normalize(evidence)
     # Escape HTML-special characters inside a script raw-text element.
     payload=json.dumps(evidence,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
     destination=Path(output)
