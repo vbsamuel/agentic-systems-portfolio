@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .repair_agent import execute as execute_repair
 from .http_integration import Endpoint, synchronize
+from .catalog_agent import model_governed_reconcile
 
 def atomic_json(path, value):
     target=Path(path)
@@ -64,14 +65,24 @@ def execute(config, output):
         return record
 
     catalog=config["catalog"]
-    catalog_result=step("catalog_live_http_reconcile_and_verify",
-        lambda:synchronize(Endpoint(**catalog["authoritative"]),
-                           Endpoint(**catalog["published"]),
-                           writeback=policy["catalog_writeback"]))
+    model_catalog = config.get("catalog_model_driven", False)
+    if model_catalog:
+        catalog_result=step("catalog_real_model_decision_and_conditional_publication",
+            lambda:model_governed_reconcile(
+                config["model_endpoint"],
+                Endpoint(**catalog["authoritative"]),
+                Endpoint(**catalog["published"]),
+                writeback=policy["catalog_writeback"],
+                approved_digest=config.get("catalog_approved_digest")))
+    else:
+        catalog_result=step("catalog_live_http_reconcile_and_verify",
+            lambda:synchronize(Endpoint(**catalog["authoritative"]),
+                               Endpoint(**catalog["published"]),
+                               writeback=policy["catalog_writeback"]))
     record["catalog"]=catalog_result
     catalog_ok=catalog_result["verified"] and (
-        catalog_result["before"]["status"]=="PASS" or
-        catalog_result.get("writeback_performed",False))
+        (catalog_result.get("before",{}).get("status")=="PASS" and not model_catalog)
+        or catalog_result.get("writeback_performed",False))
     record["state"]="PASS" if catalog_ok else "BLOCKED_CATALOG"
     record["finished_at"]=datetime.now(timezone.utc).isoformat()
     atomic_json(output,record)
