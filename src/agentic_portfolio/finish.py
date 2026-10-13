@@ -24,8 +24,8 @@ def close(config_path,report_path,reviewer,confirmed,ssh_private_key=None,allowe
     report=Path(report_path)
     reviewed=json.loads(report.read_text(encoding="utf-8"))
     catalog=reviewed.get("catalog") or {}
-    if catalog.get("status")!="AWAITING_APPROVAL" or catalog.get("decision",{}).get("action")!="CORRECT":
-        raise ValueError("only a reviewed CORRECT proposal can be published")
+    if catalog.get("status") not in ("AWAITING_APPROVAL","EFFECT_UNCERTAIN","RETRY_REQUIRES_REVIEW") or catalog.get("decision",{}).get("action")!="CORRECT":
+        raise ValueError("only a reviewed CORRECT proposal or its uncertain effect can be recovered")
     config=json.loads(Path(config_path).read_text(encoding="utf-8"))
     if not config.get("catalog_model_driven"):
         raise ValueError("model-driven catalog mode required")
