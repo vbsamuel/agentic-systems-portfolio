@@ -61,5 +61,14 @@
     "correctable_fields": [
       "price"
     ]
+  },
+  "catalog_model_endpoint": {
+    "url": "http://127.0.0.1:1234/v1/chat/completions",
+    "token": "local-development-only",
+    "model": "deepseek/deepseek-r1-0528-qwen3-8b",
+    "timeout_seconds": 45,
+    "max_response_bytes": 100000,
+    "system_prompt": "Return only a JSON object with exactly action, skus, rationale. Use CORRECT only for explicitly authorized, unambiguous observed discrepancies; otherwise ESCALATE. No markdown.",
+    "max_tokens": 2048
   }
 }
