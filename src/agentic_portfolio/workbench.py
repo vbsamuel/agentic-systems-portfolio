@@ -47,7 +47,7 @@ tr.event{cursor:pointer}tr.event:hover{background:#1b2c42}tr.event.selected{back
 .details{padding:20px}.details dl{margin:14px 0;display:grid;grid-template-columns:110px 1fr;gap:9px;font-size:12px}
 dt{color:#95a9c4}dd{margin:0;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;background:#09111e;border:1px solid #2a3b54;padding:15px;border-radius:8px;font-size:12px;color:#c1d5f0}
 .btn{background:#223b5b;border:1px solid #395d88;color:#e2efff;border-radius:7px;padding:7px 12px}
-.stageflow{padding:12px 18px 18px;display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;border-bottom:1px solid #26364b}
+.stageflow{padding:12px 18px 18px;display:flex;flex-wrap:nowrap;overflow-x:auto;align-items:stretch;gap:8px;border-bottom:1px solid #26364b}
 .stagebutton{border:1px solid #355070;background:#14273c;color:#dbeafa;padding:10px 13px;min-width:176px;max-width:260px;flex:0 0 auto;text-align:left;border-radius:8px}
 .stagebutton:hover,.stagebutton.selected{border-color:#85b8fc;background:#233b58}
 .stagebutton strong{display:block;font-size:12px;overflow-wrap:anywhere}
