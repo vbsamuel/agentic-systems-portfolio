@@ -6,6 +6,7 @@ including on failures. Source checkout remains untouched; repaired candidate
 is saved as a Git ref. Catalog writeback requires explicit runtime authority.
 """
 import argparse
+import subprocess
 import json
 import os
 import sys
@@ -33,6 +34,24 @@ def execute(config, output):
     run_id=str(uuid.uuid4())
     record={"schema_version":1,"run_id":run_id,"started_at":datetime.now(timezone.utc).isoformat(),
             "state":"RUNNING","stages":[],"engineering":None,"catalog":None}
+    prior=None
+    if config.get("resume_verified_engineering") and Path(output).exists():
+        prior=json.loads(Path(output).read_text(encoding="utf-8"))
+        candidate=prior.get("engineering") or {}
+        if candidate.get("status")!="VERIFIED_CANDIDATE_PERSISTED":
+            raise ValueError("resume refused: previous engineering verification missing")
+        repo=config["engineering"]["repository"]
+        def rev(*parts):
+            return subprocess.run(["git","-C",repo,*parts],capture_output=True,
+                                  text=True,check=True,timeout=30).stdout.strip()
+        if (rev("rev-parse","HEAD")!=candidate["base_revision"] or
+            rev("rev-parse",candidate["candidate_ref"])!=candidate["candidate_revision"] or
+            rev("status","--porcelain")):
+            raise ValueError("resume refused: candidate ref, baseline, or clean source changed")
+        record=prior
+        record["state"]="RUNNING"
+        record["stages"].append({"name":"resume_verified_engineering","state":"REUSED",
+                                  "outcome":candidate["candidate_revision"]})
     atomic_json(output,record)
     def step(name, action):
         beginning=time.perf_counter_ns()
@@ -55,8 +74,9 @@ def execute(config, output):
     if not isinstance(policy.get("engineering_worktree_mutation"),bool) or not isinstance(policy.get("catalog_writeback"),bool):
         raise ValueError("both explicit approval booleans required")
     # Do not advance if an earlier candidate fails or requires review.
-    engineering=step("engineering_real_model_to_git_repair",
-        lambda:execute_repair(config,approve=policy["engineering_worktree_mutation"]))
+    engineering=(record["engineering"] if prior else
+        step("engineering_real_model_to_git_repair",
+            lambda:execute_repair(config,approve=policy["engineering_worktree_mutation"])))
     record["engineering"]=engineering
     atomic_json(output,record)
     if engineering["status"]!="VERIFIED_CANDIDATE_PERSISTED":
