@@ -19,11 +19,19 @@ def decide(model_config, source, published, authority_policy=None):
         "authoritative_sha256":source["sha256"],
         "published_sha256":published["sha256"],
         "findings":findings["findings"]},sort_keys=True)
-    response=invoke_model(model_config,prompt)
-    raw=response["response"].strip()
-    if raw.startswith("```"):
-        raw=raw.split("\n",1)[1].rsplit("```",1)[0].strip()
-    decision=json.loads(raw)
+    if frozen_proposal is not None:
+        if not isinstance(frozen_proposal,dict) or not isinstance(frozen_proposal.get("decision"),dict):
+            raise ValueError("invalid frozen proposal")
+        decision=frozen_proposal["decision"]
+        response={"model":frozen_proposal.get("model","reviewed-model"),
+                  "usage":frozen_proposal.get("usage",{}),
+                  "response_digest":frozen_proposal.get("response_digest","reviewed-response")}
+    else:
+        response=invoke_model(model_config,prompt)
+        raw=response["response"].strip()
+        if raw.startswith("```"):
+            raw=raw.split("\n",1)[1].rsplit("```",1)[0].strip()
+        decision=json.loads(raw)
     if set(decision)!={"action","skus","rationale"}:
         raise ValueError("catalog agent returned invalid contract")
     if decision["action"] not in ("CORRECT","ESCALATE"):
@@ -49,11 +57,14 @@ def decide(model_config, source, published, authority_policy=None):
             "response_digest":response["response_digest"],"before":findings}
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
-                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None):
+                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None,frozen_proposal=None):
     from .http_integration import synchronize
     source=call(catalog_endpoint)
     published=call(channel_endpoint)
-    outcome=decide(model_config,source,published,authority_policy=authority_policy)
+    outcome=decide(model_config,source,published,authority_policy=authority_policy,
+                   frozen_proposal=frozen_proposal)
+    if frozen_proposal is not None and frozen_proposal.get("decision_digest")!=outcome["decision_digest"]:
+        raise ValueError("frozen proposal no longer matches source observations")
     decision=outcome["decision"]
     if decision["action"]=="ESCALATE" or not writeback:
         outcome.update(verified=outcome["before"]["status"]=="PASS",
