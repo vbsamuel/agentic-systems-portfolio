@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from .workbench import PAGE
 from .causal_graph import normalize
+from .event_journal import EventJournal
 
 LIVE_SCRIPT = """
 const notice=document.createElement("span");
@@ -47,7 +48,7 @@ def handler_for(report, interval_ms):
             self.wfile.write(body)
         def do_GET(self):
             route=urlsplit(self.path).path
-            if route not in ("/","/api/run"):
+            if route not in ("/","/api/run","/api/events"):
                 return self.respond(404,"application/json",b'{"error":"not_found"}')
             try:
                 raw=report.read_bytes()
@@ -57,6 +58,18 @@ def handler_for(report, interval_ms):
             except (OSError,ValueError,UnicodeError):
                 return self.respond(503,"application/json",b'{"error":"evidence_unavailable"}')
             digest=hashlib.sha256(raw).hexdigest()
+            if route=="/api/events":
+                path=report.with_suffix(".events.sqlite3")
+                if not path.is_file():
+                    return self.respond(404,"application/json",b'{"error":"journal_not_found"}')
+                journal=EventJournal(path)
+                try:
+                    journal.verify()
+                    events=journal.read(data["run_id"])
+                except (ValueError, OSError):
+                    return self.respond(409,"application/json",b'{"error":"journal_integrity_failure"}')
+                payload=json.dumps({"run_id":data["run_id"],"events":events}).encode()
+                return self.respond(200,"application/json",payload,hashlib.sha256(payload).hexdigest())
             if route=="/api/run":
                 return self.respond(200,"application/json",raw,digest)
             data["execution_graph"]=normalize(data)
