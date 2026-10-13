@@ -114,6 +114,7 @@ def execute(config, output):
                 approval_grant=(json.loads(Path(config["catalog_approval_grant_file"]).read_text())
                     if config.get("catalog_approval_grant_file") else config.get("catalog_approval_grant")),
                 approval_key=os.environ.get("AGENTIC_APPROVAL_SIGNING_KEY"),
+                approval_allowed_signers=config.get("approval_allowed_signers_file"),
                 run_id=record["run_id"],
                 effect_ledger_path=str(Path(output).with_suffix(".effects.sqlite3")),
                 frozen_proposal=(prior.get("catalog") if prior and config.get("catalog_approved_digest") else None)))
