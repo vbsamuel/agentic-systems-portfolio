@@ -97,7 +97,7 @@ for(const phase of view.lifecycle){
  const heading=document.createElement("strong");heading.textContent=phase.title;
  const state=document.createElement("small");state.textContent=phase.state;button.append(heading,state);
  button.addEventListener("click",()=>{if(phase.evidence){selectNative(phase.evidence)}else{document.getElementById("detail-title").textContent=phase.title;document.getElementById("detail-summary").textContent=phase.title+" · "+phase.state+" · "+(phase.source||"report");document.getElementById("details").textContent=JSON.stringify(phase,null,2)}});
- lifecycleRoot.append(button)
+ lifecycleRoot.append(button);if(phase.key!=="readback"){const arrow=document.createElement("span");arrow.className="flowconnector";arrow.textContent="→";arrow.title="Lifecycle presentation order, not a fabricated journal parent";lifecycleRoot.append(arrow)}
 }
 const outcome=document.getElementById("business-outcome");
 const findings=data.catalog?.before?.findings||[];
@@ -114,7 +114,7 @@ function inspectOperation(op){
  document.getElementById("detail-title").textContent=op.tool+" · "+op.state;
  const panel=document.getElementById("detail-summary");panel.replaceChildren();
  const details=[["Operation",op.tool],["Outcome",op.state],["Duration",op.duration_ms==null?"Not recorded":op.duration_ms+" ms"],["Result",op.result??"Not recorded"],["Input event",op.start_event],["Output event",op.end_event||"Not recorded"],["Causal parent",op.parent_event||"Root"]];
- for(const [k,v] of details){const line=document.createElement("div");line.textContent=k+" · "+v;panel.append(line)}
+ for(const [k,v] of details){const line=document.createElement("div");line.textContent=k+" · "+v;panel.append(line)}for(const [label,id] of [["Inspect start event",op.start_event],["Inspect completion event",op.end_event],["Inspect causal parent",op.parent_event]]){if(!id||!byId.has(id))continue;const button=document.createElement("button");button.type="button";button.className="btn";button.style.margin="6px 6px 4px 0";button.textContent=label;button.addEventListener("click",()=>selectNative(id));panel.append(button)}
  document.getElementById("metadata").replaceChildren();
  document.getElementById("details").textContent=JSON.stringify({input:op.input,output:op.output},null,2);
  document.querySelectorAll("tr.event").forEach(tr=>tr.classList.toggle("selected",tr.dataset.id===op.id))
