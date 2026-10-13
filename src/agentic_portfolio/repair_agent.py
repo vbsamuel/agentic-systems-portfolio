@@ -14,10 +14,16 @@ import tempfile
 import time
 from pathlib import Path
 from .integrated_run import invoke_model, run_command
+from .trace_spans import emit as trace_emit
 
 def git(cwd, *args):
+    span=trace_emit("git_call_started",{"operation":args[0] if args else "unknown"})
+    start=time.perf_counter_ns()
     result = subprocess.run(["git", "-C", str(cwd), *args],
                             text=True, capture_output=True, check=True, timeout=60)
+    trace_emit("git_call_completed",{"operation":args[0] if args else "unknown",
+                 "duration_ms":round((time.perf_counter_ns()-start)/1e6,3),
+                 "return_code":result.returncode},parent_id=span)
     return result.stdout.strip()
 
 def parse_proposal(raw):
@@ -43,9 +49,13 @@ def run_isolated_check(command, directory, timeout):
     with tempfile.TemporaryDirectory(prefix="agent-bytecode-") as cache:
         environment = os.environ.copy()
         environment["PYTHONPYCACHEPREFIX"] = cache
+        span=trace_emit("validation_started",{"argv_count":len(command)})
+        started=time.perf_counter_ns()
         result = subprocess.run(command, cwd=directory, timeout=timeout,
                                 capture_output=True, text=True, check=False,
                                 env=environment)
+        trace_emit("validation_completed",{"return_code":result.returncode,
+                   "duration_ms":round((time.perf_counter_ns()-started)/1e6,3)},parent_id=span)
         return {"command":command, "exit_code":result.returncode,
                 "stdout":result.stdout[-16000:], "stderr":result.stderr[-16000:]}
 
