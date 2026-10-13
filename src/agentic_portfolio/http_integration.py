@@ -59,6 +59,9 @@ def call(endpoint: Endpoint, method='GET', payload=None, version=None):
     except HTTPError as exc:
         trace_emit('http_call_failed',{'method':method,'status':exc.code},parent_id=span)
         raise RuntimeError(f'HTTP {exc.code} for authenticated {method} endpoint') from exc
+    except Exception as error:
+        trace_emit('http_call_failed',{'method':method,'error_type':type(error).__name__},parent_id=span)
+        raise
 
 def synchronize(catalog: Endpoint, channel: Endpoint, *, writeback=False):
     """Fetch both live endpoints; write only if explicitly enabled and versioned.
