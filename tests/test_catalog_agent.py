@@ -15,7 +15,7 @@ class CatalogAgentTests(unittest.TestCase):
                 "model":"model","usage":{"total_tokens":19},"response_digest":"modeldigest"}
         with patch("agentic_portfolio.catalog_agent.invoke_model",return_value=result):
             first=decide({},source,channel,{"catalog_is_source_of_truth":True,"correctable_fields":["price"]})
-            second=decide({},source,channel)
+            second=decide({},source,channel,{"catalog_is_source_of_truth":True,"correctable_fields":["price"]})
         self.assertEqual(first["decision_digest"],second["decision_digest"])
         self.assertEqual(first["before"]["findings"][0]["field"],"price")
     def test_reject_unobserved_sku(self):
