@@ -117,6 +117,9 @@ The command prints `REVIEW_STARTED` with a new report path. Engineering runs rea
 
 On success, the program prints `status: PASS`, `scope: LOCAL_TWO_MODEL_VERTICAL_PASS`, `run_id`, `evidence`, `workbench`, and `external_production_qualification: NOT_PERFORMED`. **Only a real completed output with exit code 0 is PASS.**
 
+
+**Long-running calls:** While engineering and catalog models work, the operator now prints actual `STAGE_STARTED` / `STAGE_COMPLETED` events and a 15-second `EXECUTION_IN_PROGRESS` heartbeat. Waiting is normal for local inference; `Ctrl+C` deliberately interrupts the workflow and returns a blocked result. If you interrupt, inspect the saved `run.json` and only use catalog recovery if its engineering candidate was verified. Do not assume `REVIEW_STARTED` means completion.
+
 ## Step 5 — Inspect the run and workbench
 
 Copy the *report path printed for your actual run*, not a historic path:
