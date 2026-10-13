@@ -48,7 +48,7 @@ tr.event{cursor:pointer}tr.event:hover{background:#1b2c42}tr.event.selected{back
 dt{color:#95a9c4}dd{margin:0;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;background:#09111e;border:1px solid #2a3b54;padding:15px;border-radius:8px;font-size:12px;color:#c1d5f0}
 .btn{background:#223b5b;border:1px solid #395d88;color:#e2efff;border-radius:7px;padding:7px 12px}
 .stageflow{padding:12px 18px 18px;display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;border-bottom:1px solid #26364b}
-.stagebutton{border:1px solid #355070;background:#14273c;color:#dbeafa;padding:10px 13px;min-width:160px;max-width:260px;text-align:left;border-radius:8px}
+.stagebutton{border:1px solid #355070;background:#14273c;color:#dbeafa;padding:10px 13px;min-width:176px;max-width:260px;flex:0 0 auto;text-align:left;border-radius:8px}
 .stagebutton:hover,.stagebutton.selected{border-color:#85b8fc;background:#233b58}
 .stagebutton strong{display:block;font-size:12px;overflow-wrap:anywhere}
 .stagebutton small{color:#98b3d2;display:block;margin-top:5px}
@@ -91,7 +91,7 @@ const stageNodes=nodes.filter(n=>n.kind==="stage_started");
 const stageFlow=document.getElementById("stageflow");
 const lifecycleRoot=document.getElementById("lifecycle");
 let operationsMode=true;
-function selectNative(id){const node=byId.get(id);if(node){operationsMode=false;stageFilter=null;document.getElementById("filter").value="all";inspect(node);render();}}
+function selectNative(id){const node=byId.get(id);if(node){operationsMode=false;stageFilter=null;document.getElementById("filter").value="all";document.getElementById("event-mode").setAttribute("aria-pressed","true");document.getElementById("operation-mode").setAttribute("aria-pressed","false");inspect(node);render();}}
 for(const phase of view.lifecycle){
  const button=document.createElement("button");button.type="button";button.className="stagebutton";
  const heading=document.createElement("strong");heading.textContent=phase.title;
