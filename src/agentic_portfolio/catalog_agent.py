@@ -58,7 +58,37 @@ def decide(model_config, source, published, authority_policy=None):
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
                              *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None,frozen_proposal=None):
-    from .http_integration import synchronize
+    # Before re-invoking any model, reconcile a previously PREPARED effect.
+    # A crashed publisher may have committed remotely without recording ACK.
+    if writeback and run_id and approved_digest and effect_ledger_path:
+        prior_id=hashlib.sha256((run_id+"|"+approved_digest).encode()).hexdigest()
+        ledger=EffectLedger(effect_ledger_path)
+        prior=ledger.get(prior_id)
+        if prior is not None:
+            if (prior["run_id"]!=run_id or prior["decision_digest"]!=approved_digest):
+                raise ValueError("existing publication intent identity mismatch")
+            if not approval_key or approval_grant is None:
+                return {"status":"AUTHENTICATED_APPROVAL_REQUIRED","verified":False,
+                        "writeback_performed":False}
+            try:
+                verify_approval(approval_key,approval_grant,run_id=run_id,
+                                decision_digest=approved_digest)
+            except ValueError:
+                return {"status":"AUTHENTICATED_APPROVAL_REJECTED","verified":False,
+                        "writeback_performed":False}
+            latest_source=call(catalog_endpoint)
+            latest_channel=call(channel_endpoint)
+            if latest_source["sha256"]!=prior["intent"]["source_sha256"]:
+                return {"status":"SOURCE_DRIFT","verified":False,"writeback_performed":False}
+            state=ledger.reconcile(prior_id,latest_channel["body"])
+            if state=="VERIFIED":
+                return {"status":"VERIFIED_RECOVERED","verified":True,
+                        "writeback_performed":False,"effect_recovered":True,
+                        "effect_id":prior_id,"decision_digest":approved_digest,
+                        "publish_evidence":{"after":report(latest_source["body"],latest_channel["body"]),
+                                            "observed_digest":latest_channel["sha256"]}}
+            return {"status":state,"verified":False,"writeback_performed":False,
+                    "effect_id":prior_id,"decision_digest":approved_digest}
     source=call(catalog_endpoint)
     published=call(channel_endpoint)
     outcome=decide(model_config,source,published,authority_policy=authority_policy,
