@@ -76,3 +76,7 @@ Each stage records the workflow, name, measured wall-clock duration in milliseco
 Endpoint contract: GET catalog and channel URLs must return arrays of records with `sku,title,description,price,currency,availability,image_url`. PUT channel URL accepts `{"products":[...]}` with `If-Match`. Only use configured services that implement and authorize this contract. In particular, do not enable writeback against production services without an operator-approved policy.
 
 The engineering track still lacks an AI coding-agent runtime with independent defect diagnosis and actual generated patch application. No production release or non-stub fully autonomous qualification is claimed.
+
+## Model-authored engineering repair
+
+The new [repair agent](src/agentic_portfolio/repair_agent.py) performs an actual local-model proposal against a failing Git checkout, applies a bounded edit in a detached worktree after an explicit execution flag, and runs post-change tests. See [operator contract](REPAIR_AGENT.md). It is **not** yet part of a fully recoverable unified two-agent service, and no observed local-model repair run has been qualified.
