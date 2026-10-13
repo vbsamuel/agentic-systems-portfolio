@@ -7,3 +7,10 @@ __pycache__/
 
 # Private per-operator execution artifacts; public sanitized evidence goes in evidence/.
 /artifacts/operator-runs/
+
+# Generated local execution and reporting artifacts
+/artifacts/agent-execution-workbench.html
+/artifacts/full-vertical.json
+/artifacts/integrated-run.json
+/artifacts/qualification.json
+/artifacts/two-model-review.json
