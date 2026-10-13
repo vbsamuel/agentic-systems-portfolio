@@ -71,10 +71,13 @@ def serve(path,token,host,port):
                 rev=db.execute("SELECT revision FROM revisions WHERE channel='published'").fetchone()[0]
                 if self.headers.get("If-Match")!=str(rev):
                     return self.send_json(412,{"error":"version conflict"},rev)
+                current={row[0] for row in db.execute("SELECT sku FROM products WHERE channel='published'")}
+                if set(ids)!=current:
+                    db.rollback()
+                    return self.send_json(409,{"error":"SKU set differs from current channel"})
                 for p in records:
-                    changed=db.execute("UPDATE products SET body=? WHERE channel='published' AND sku=?",
-                                       (json.dumps(p,sort_keys=True),p["sku"]))
-                    if changed.rowcount!=1: return self.send_json(409,{"error":"unknown SKU"})
+                    db.execute("UPDATE products SET body=? WHERE channel='published' AND sku=?",
+                               (json.dumps(p,sort_keys=True),p["sku"]))
                 db.execute("UPDATE revisions SET revision=revision+1 WHERE channel='published'")
                 db.commit()
                 self.send_json(200,{"updated":len(records)},rev+1)
