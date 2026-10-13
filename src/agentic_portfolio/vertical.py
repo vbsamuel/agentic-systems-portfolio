@@ -5,6 +5,7 @@ service is a SQLite-backed HTTP API, not a mocked adapter. Does not represent
 a customer deployment. No remote Git push or external publishing system used.
 """
 import argparse
+import fcntl
 import json
 import secrets
 import subprocess
@@ -20,6 +21,20 @@ def git(cwd,*args):
                           timeout=30,check=True).stdout.strip()
 
 def run(configuration, output):
+    """Prevent concurrent operators from mutating the same run and report."""
+    lock_path=Path(output).with_suffix(".operator.lock")
+    lock_path.parent.mkdir(parents=True,exist_ok=True)
+    with lock_path.open("a+") as guard:
+        try:
+            fcntl.flock(guard.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError("another operator execution holds this run lock") from exc
+        try:
+            return _run(configuration,output)
+        finally:
+            fcntl.flock(guard.fileno(),fcntl.LOCK_UN)
+
+def _run(configuration, output):
     spec=configuration["vertical"]
     root=Path(spec["workspace"]).expanduser().resolve()
     root.mkdir(parents=True,exist_ok=True)
