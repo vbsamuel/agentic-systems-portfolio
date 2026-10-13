@@ -97,10 +97,27 @@ def execute(config, *, approve=False):
                         "proposal":proposal,"events":events,"mutation_performed":True}
             if git(source,"rev-parse","HEAD") != head:
                 raise ValueError("original repository drifted during execution")
-            return {"status":"VERIFIED_IN_ISOLATED_WORKTREE","base_revision":head,
+            identity = spec["commit_identity"]
+            if not isinstance(identity, dict) or not identity.get("name") or not identity.get("email"):
+                raise ValueError("commit_identity requires name and email")
+            git(checkout, "add", "--", rel)
+            git(checkout, "-c", "user.name="+identity["name"],
+                "-c", "user.email="+identity["email"], "commit", "-m",
+                "agent: verified correction")
+            candidate_revision = git(checkout, "rev-parse", "HEAD")
+            if git(source, "rev-parse", "HEAD") != head:
+                raise ValueError("source revision drifted before candidate publication")
+            ref = "refs/agentic-repairs/" + candidate_revision
+            git(source, "update-ref", ref, candidate_revision)
+            if git(source, "rev-parse", ref) != candidate_revision:
+                raise ValueError("candidate ref persistence failed")
+            events.append({"stage":"persistent_candidate",
+                           "ref":ref,"candidate_revision":candidate_revision})
+            return {"status":"VERIFIED_CANDIDATE_PERSISTED","base_revision":head,
+                    "candidate_revision":candidate_revision, "candidate_ref":ref,
                     "proposal":proposal,"events":events,
                     "mutation_performed":True,"duration_seconds":round(time.perf_counter()-started,3),
-                    "source_repository_unchanged":True}
+                    "source_repository_unchanged":git(source,"rev-parse","HEAD")==head}
         finally:
             subprocess.run(["git","-C",str(source),"worktree","remove","--force",str(checkout)],
                            capture_output=True,timeout=60)
@@ -120,7 +137,7 @@ def main():
     out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps({"status":result["status"],"output":str(out)}))
-    return 0 if result["status"]=="VERIFIED_IN_ISOLATED_WORKTREE" else 2
+    return 0 if result["status"]=="VERIFIED_CANDIDATE_PERSISTED" else 2
 
 if __name__=="__main__":
     raise SystemExit(main())
