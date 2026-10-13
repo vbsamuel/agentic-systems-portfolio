@@ -60,7 +60,9 @@ def run(configuration, output):
                 "published":{"url":base+"/published","token":token,
                              "timeout_seconds":spec["http_timeout_seconds"]}
             },
-            "approvals":configuration["approvals"]
+            "approvals":configuration["approvals"],
+            "catalog_model_driven":configuration.get("catalog_model_driven",False),
+            "catalog_approved_digest":configuration.get("catalog_approved_digest")
         }
         result=execute(config,output)
         result["vertical_workspace"]=str(root)
