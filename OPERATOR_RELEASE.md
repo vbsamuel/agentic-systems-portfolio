@@ -16,12 +16,14 @@ your configured LM Studio model. It will mutate the published price in that
 local service only after you explicitly authorize the displayed digest.
 It does **not** connect to or mutate a customer website by default.
 
+**Current operator quickstart:** [QUICKSTART.md](QUICKSTART.md). The browser workbench uses 64 native events, 25 paired tool calls and five recorded lifecycle phases on the later qualified run. External production remains unqualified.
+
 Your previously recorded two-model run
 `31398dd5-ef83-4ac4-8124-efbacf17e44e` remains legitimate historical
 evidence, but it predates native inference and tool child spans. It cannot
 be retroactively represented as a complete six-gate native trace. For a new qualification, create one instrumented session and approve\nthe publication **under that same run ID**. The operator has already\ncompleted a qualified local session under run\n`8b5d0b96-6c30-4ea3-8d01-9919e44052e6`; see [release record](LOCAL_RELEASE_2026-10-13.md).
 
-The operator confirmed **68/68 PASS** on the earlier 2026-10-13 tranche. An interim diagnostic-message assertion regression was corrected. The final operator release command subsequently returned **LOCAL_TWO_MODEL_VERTICAL_PASS**, exit code 0. The exact execution and limitations are recorded in [LOCAL_RELEASE_2026-10-13.md](LOCAL_RELEASE_2026-10-13.md).
+Historical test count **68/68 PASS** applies to an earlier tranche; the latest operator-reported suite is **76/76 PASS**, followed by `LOCAL_OPERATOR_WORKBENCH_VERTICAL`, RC 0, on saved run `cc4ec0f2-effd-441a-8ddd-951c18a590af`. An interim diagnostic-message assertion regression was corrected. The final operator release command subsequently returned **LOCAL_TWO_MODEL_VERTICAL_PASS**, exit code 0. The exact execution and limitations are recorded in [LOCAL_RELEASE_2026-10-13.md](LOCAL_RELEASE_2026-10-13.md).
 
 ## 2. One-time reviewer trust setup
 
@@ -98,9 +100,7 @@ The second model invocation uses real HTTP observations and an explicit
 source-of-truth policy, then displays the **actual** SKU, mismatches,
 model rationale and decision digest.
 
-At the prompt, inspect the findings. To authorize the exact local
-publication, **type the entire displayed decision digest**. Any other input
-retains the review and stops with no publication.
+At the explicit **[1] APPROVE / [2] REJECT / [3] DEFER** prompt, inspect the actual SKU, source/published prices, rationale and decision digest. Enter `1`, `approve`, `approved` or `accept` to authorize that displayed local change. Enter `2`/`reject` or `3`/`defer` to preserve the run without publication; those intentional no-write decisions return RC 0 but **do not qualify a release**. Invalid input returns `INVALID_DECISION`, RC 2. The signer still binds the exact observed digest, run, scope and expiry.
 
 If approved, the same run verifies a reviewer-held SSH signature, freezes
 the actual model proposal (no fresh model inference), checks source
