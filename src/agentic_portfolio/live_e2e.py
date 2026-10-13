@@ -112,7 +112,8 @@ def execute(config, output):
                     if config.get("catalog_approval_grant_file") else config.get("catalog_approval_grant")),
                 approval_key=os.environ.get("AGENTIC_APPROVAL_SIGNING_KEY"),
                 run_id=record["run_id"],
-                effect_ledger_path=str(Path(output).with_suffix(".effects.sqlite3"))))
+                effect_ledger_path=str(Path(output).with_suffix(".effects.sqlite3")),
+                frozen_proposal=(prior.get("catalog") if prior and config.get("catalog_approved_digest") else None)))
     else:
         catalog_result=step("catalog_live_http_reconcile_and_verify",
             lambda:synchronize(Endpoint(**catalog["authoritative"]),
