@@ -26,6 +26,17 @@ class EffectLedgerTests(unittest.TestCase):
             intent={"previous_products":[record("119.00")],"desired_products":[record("100.00")]}
             ledger.prepare("effect-2","run","digest",intent)
             self.assertEqual(ledger.reconcile("effect-2",intent["previous_products"]),"RETRY_REQUIRES_REVIEW")
+    def test_uncertain_effect_can_be_verified_by_readback_without_resending(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger=EffectLedger(Path(td)/"effects.db")
+            intent={"previous_products":[record("119.00")],"desired_products":[record("100.00")]}
+            ledger.prepare("effect-4","run","digest",intent)
+            ledger.outcome("effect-4","UNCERTAIN",{"cause":"lost_http_ack"})
+            self.assertEqual(ledger.reconcile("effect-4",intent["desired_products"]),"VERIFIED")
+            self.assertEqual(ledger.get("effect-4")["state"],"VERIFIED")
+            with self.assertRaisesRegex(ValueError,"transition prohibited"):
+                ledger.outcome("effect-4","UNCERTAIN",{})
+
     def test_concurrent_state_drift_is_uncertain(self):
         with tempfile.TemporaryDirectory() as td:
             ledger=EffectLedger(Path(td)/"effects.db")
