@@ -53,3 +53,48 @@ The catalog agent now accepts configured authority policy identifying the truste
 | External customer production connectors and operational qualification | **OPEN** |
 
 **Do not claim 100% production completion from these local results.** The next qualification must run the updated regression, obtain a new grounded correction decision with the explicit authority policy, record its reviewed digest, and independently verify the ensuing publication. Any missing or conflicting evidence is a blocking failure, not a PASS.
+
+
+## Q4. Authority-policy regression and real two-model correction proposal (operator observed)
+
+The first authority-policy regression was red: 34 tests succeeded and one existing decision-repeatability test errored because its second invocation omitted the now-required authority policy. This was a test-fixture error, **not** a reason to relax the runtime authorization guard. It was corrected in commit `e8dc43c`. The operator subsequently ran the complete suite: **35 tests passed; `TEST_RC=0`; 3.030 seconds**.
+
+Using the existing run ID `31398dd5-ef83-4ac4-8124-efbacf17e44e` and reusing the previously verified engineering Git candidate, the operator supplied the explicit authority policy:
+
+```json
+{"catalog_is_source_of_truth":true,"correctable_fields":["price"]}
+```
+
+The actual loaded DeepSeek model independently evaluated the live catalog mismatch and returned:
+
+```json
+{
+  "action":"CORRECT",
+  "skus":["P-1"],
+  "rationale":"The authoritative catalog is trusted as per authority_policy's 'catalog_is_source_of_truth': true, and the affected field 'price' is allowlisted in correctable_fields. Identities are unambiguous with a single SKU provided."
+}
+```
+
+**Observed decision digest:** `e8b1b13926564ee73ab7965e54812002e7e76e2ce14825f72949a8e34d5c94ca`.
+
+**Observed run result:** `BLOCKED_CATALOG`; `catalog.status=AWAITING_APPROVAL`; `engineering.status=VERIFIED_CANDIDATE_PERSISTED`; `writeback_performed=false`; `VERTICAL_RC=2`. The catalog model **did not publish**; this is the correct safety outcome while authorization remains pending.
+
+The operator has not yet shown a new explicitly approved HTTP publication, post-write reread, or final `PASS` from the two-model run. The earlier deterministic publication Q1 is separate and cannot satisfy this missing gate.
+
+### Evidence custody and reproducibility
+
+The above values were transcribed from operator-supplied terminal output. Runtime JSON at `artifacts/two-model-review.json` and the original private configuration exist on the operator's WSL filesystem, **not in this repository by virtue of this Markdown document**. This document does not prove contents of files that have not been committed or independently fetched. Keep secrets out of committed configs and evidence. For reproducible qualification, retain the machine-generated stage report (with any sensitive tokens redacted), Git candidate object/ref and environment/model version together with this record.
+
+### Updated closure
+
+| Gate | Latest status |
+|---|---|
+| 35-test suite on `e8dc43c` | **PASS**, operator observed |
+| Actual DeepSeek engineering patch, Git commit and independent test | **PASS**, operator observed |
+| Recovery of persisted candidate | **PASS**, operator observed |
+| Live catalog LLM decision grounded in observation and authority policy | **PASS**, operator observed |
+| Model decision bound to content hashes, ETag and authority policy | Implementation and regression PASS; real `CORRECT` digest observed |
+| Exact correction approved by identified human | **OPEN** |
+| Two-model authorized publication and independent readback | **OPEN** |
+| Safe publishing replay after process termination | **OPEN** |
+| Production deployment security, connectors, loads and user impact | **OPEN** |
