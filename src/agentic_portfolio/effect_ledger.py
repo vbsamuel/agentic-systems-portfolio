@@ -7,6 +7,7 @@ other state -> UNCERTAIN. Recovery does not make another PUT automatically.
 """
 import json
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from .event_journal import canonical
 
@@ -16,11 +17,15 @@ class EffectLedger:
         Path(path).parent.mkdir(parents=True,exist_ok=True)
         with self.db() as db:
             db.execute("CREATE TABLE IF NOT EXISTS effects (effect_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, decision_digest TEXT NOT NULL, state TEXT NOT NULL, intent TEXT NOT NULL, result TEXT)")
+    @contextmanager
     def db(self):
         db=sqlite3.connect(self.path,timeout=15,isolation_level=None)
-        db.execute("PRAGMA journal_mode=WAL")
-        db.execute("PRAGMA synchronous=FULL")
-        return db
+        try:
+            db.execute("PRAGMA journal_mode=WAL")
+            db.execute("PRAGMA synchronous=FULL")
+            yield db
+        finally:
+            db.close()
     def prepare(self,effect_id,run_id,decision_digest,intent):
         with self.db() as db:
             db.execute("BEGIN IMMEDIATE")
