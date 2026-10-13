@@ -7,6 +7,7 @@ import argparse
 import html
 import json
 from pathlib import Path
+from .causal_graph import normalize
 
 PAGE='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agent Execution | Evidence Workbench</title><style>
@@ -50,13 +51,11 @@ const metrics=document.getElementById("metrics");
 for(const [name,value] of entries){const e=document.createElement("div");e.className="metric";const l=document.createElement("div");l.className="label";l.textContent=name;const v=document.createElement("strong");v.textContent=value;e.append(l,v);metrics.append(e)}
 function show(x){document.getElementById("details").textContent=JSON.stringify(x,null,2)}
 const engineering=data.engineering||null,catalog=data.catalog||null;
-const nodes=[{name:"SOURCE & BASELINE",detail:engineering?.events?.find(e=>e.stage==="baseline_reproduction")||null},
-{name:"ENGINEERING AGENT",detail:engineering},
-{name:"CATALOG & PUBLICATION",detail:catalog}];
-const dag=document.getElementById("dag");
+const nodes=(data.execution_graph?.nodes||[]).map(n=>({name:n.label,detail:n.observation,edge:n.edge_type,identity:n.id}));
+const dag=document.getElementById("dag");dag.style.display="flex";dag.style.flexDirection="column";dag.style.alignItems="stretch";dag.style.gap="6px";
 nodes.forEach((n,i)=>{if(i){const line=document.createElement("div");line.className="line";dag.append(line)}
-const b=document.createElement("button");b.className="node";const type=document.createElement("div");type.className="label";type.textContent="STAGE 0"+(i+1);
-const title=document.createElement("strong");title.textContent=n.name;const status=document.createElement("span");status.textContent=n.detail?"OBSERVED":"NOT OBSERVED";
+const b=document.createElement("button");b.className="node";b.style.minHeight="70px";const type=document.createElement("div");type.className="label";type.textContent=n.edge||"RUN ROOT";
+const title=document.createElement("strong");title.textContent=n.name;const status=document.createElement("span");status.textContent=n.identity||"NOT OBSERVED";
 b.append(type,title,status);b.addEventListener("click",()=>show(n.detail||{status:"NOT_OBSERVED"}));dag.append(b)});
 const timeline=document.getElementById("timeline");
 const events=(data.stages||[]).map(x=>({name:x.name,stage:x}));for(const x of engineering?.events||[]){events.push({name:"Engineering / "+x.stage,stage:x})}
@@ -68,6 +67,7 @@ def build(report, output):
     evidence=json.loads(Path(report).read_text(encoding="utf-8"))
     if not isinstance(evidence,dict) or not evidence.get("run_id"):
         raise ValueError("run report lacks run_id")
+    evidence["execution_graph"]=normalize(evidence)
     # Escape HTML-special characters inside a script raw-text element.
     payload=json.dumps(evidence,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
     destination=Path(output)
