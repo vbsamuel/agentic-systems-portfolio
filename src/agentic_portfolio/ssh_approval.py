@@ -18,9 +18,18 @@ NAMESPACE="agentic-catalog-publish"
 def sign(key_path,**fields):
     payload=grant_message(**fields)
     message=canonical(payload).encode()
-    result=subprocess.run(["ssh-keygen","-Y","sign","-f",str(key_path),"-n",NAMESPACE],
-                          input=message,capture_output=True,check=True,timeout=20)
-    return {**payload,"auth_type":"openssh","signature":result.stdout.decode()}
+    key=Path(key_path).expanduser()
+    if not key.is_file():
+        raise ValueError("reviewer SSH private key not found: "+str(key))
+    result=subprocess.run(["ssh-keygen","-Y","sign","-f",str(key),"-n",NAMESPACE],
+                          input=message,capture_output=True,timeout=30)
+    if result.returncode:
+        detail=result.stderr.decode(errors="replace").strip()[-1200:]
+        raise ValueError("SSH signing failed (rc="+str(result.returncode)+"): "+detail)
+    signature=result.stdout.decode()
+    if "BEGIN SSH SIGNATURE" not in signature:
+        raise ValueError("SSH signer did not return a signature")
+    return {**payload,"auth_type":"openssh","signature":signature}
 
 def verify(allowed_signers,grant,*,run_id,decision_digest,now=None):
     if set(grant)!={"run_id","decision_digest","reviewer","expires_at","scope","auth_type","signature"}:
