@@ -86,7 +86,8 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
             if (prior["run_id"]!=run_id or prior["decision_digest"]!=approved_digest):
                 raise ValueError("existing publication intent identity mismatch")
             if not authorize():
-                return {"status":"AUTHENTICATED_APPROVAL_REJECTED",
+                return {"status":("AUTHENTICATED_APPROVAL_REQUIRED" if approval_grant is None
+                                  else "AUTHENTICATED_APPROVAL_REJECTED"),
                         "verified":False,"writeback_performed":False}
             latest_source=call(catalog_endpoint)
             latest_channel=call(channel_endpoint)
@@ -125,7 +126,8 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         return outcome
     if not authorize():
         outcome.update(verified=False,writeback_performed=False,
-                       status="AUTHENTICATED_APPROVAL_REJECTED")
+                       status=("AUTHENTICATED_APPROVAL_REQUIRED" if approval_grant is None
+                               else "AUTHENTICATED_APPROVAL_REJECTED"))
         return outcome
     outcome["approval_evidence"]={
         "reviewer":approval_grant["reviewer"],
