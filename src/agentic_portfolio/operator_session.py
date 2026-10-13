@@ -23,6 +23,9 @@ def session(base_config,root,reviewer,ssh_private_key,allowed_signers,
         if engineering.get("status")!="VERIFIED_CANDIDATE_PERSISTED":
             raise ValueError("resume refused: engineering candidate unverified")
         configuration=json.loads(runtime.read_text(encoding="utf-8"))
+        if base_config:
+            updated=json.loads(Path(base_config).read_text(encoding="utf-8"))
+            configuration["catalog_model_endpoint"]=updated["catalog_model_endpoint"]
         configuration["resume_verified_engineering"]=True
         configuration["approvals"]["catalog_writeback"]=False
         configuration["catalog_approved_digest"]=None
