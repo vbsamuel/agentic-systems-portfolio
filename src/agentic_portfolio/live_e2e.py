@@ -125,7 +125,8 @@ def execute(config, output):
                             "decision_digest":catalog_result.get("decision_digest")})
     catalog_ok=catalog_result["verified"] and (
         (catalog_result.get("before",{}).get("status")=="PASS" and not model_catalog)
-        or catalog_result.get("writeback_performed",False))
+        or catalog_result.get("writeback_performed",False)
+        or catalog_result.get("effect_recovered",False))
     record["state"]="PASS" if catalog_ok else "BLOCKED_CATALOG"
     record["finished_at"]=datetime.now(timezone.utc).isoformat()
     emit("execution_finalized",{"state":record["state"]})
