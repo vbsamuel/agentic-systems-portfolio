@@ -38,7 +38,7 @@ def prepare(base_config,workspace,private_config,report):
         catalog.get("status")!="AWAITING_APPROVAL" or
         catalog.get("decision",{}).get("action")!="CORRECT"):
         raise ValueError(
-            "two-model review stopped: "
+            "actual two-model review stopped: "
             +"state="+str(result.get("state"))
             +" engineering="+str((result.get("engineering") or {}).get("status"))
             +" catalog="+str(catalog.get("status"))
