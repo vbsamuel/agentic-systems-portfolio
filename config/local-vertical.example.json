@@ -1,0 +1,58 @@
+{
+  "model_endpoint": {
+    "url": "http://127.0.0.1:1234/v1/chat/completions",
+    "token": "local-development-only",
+    "model": "deepseek/deepseek-r1-0528-qwen3-8b",
+    "timeout_seconds": 180,
+    "max_response_bytes": 100000,
+    "system_prompt": "You are a code repair agent. Respond ONLY with a JSON object containing exactly path, old_text, new_text, rationale. Do not include markdown or analysis. Use exact source substrings."
+  },
+  "approvals": {
+    "engineering_worktree_mutation": true,
+    "catalog_writeback": true
+  },
+  "vertical": {
+    "workspace": "/tmp/agentic-vertical-crosscut",
+    "project_files": {
+      "app.py": "def add_two(x):\n    \"\"\"Return the input increased by two.\"\"\"\n    return x + 1\n",
+      "test_app.py": "import unittest\nfrom app import add_two\n\nclass ContractTest(unittest.TestCase):\n    def test_add_two(self):\n        self.assertEqual(add_two(3), 5)\n        self.assertEqual(add_two(-2), 0)\n"
+    },
+    "allowed_files": [
+      "app.py"
+    ],
+    "validation_command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover"
+    ],
+    "timeout_seconds": 120,
+    "http_timeout_seconds": 10,
+    "commit_identity": {
+      "name": "Local Qualification Agent",
+      "email": "local-agent@example.invalid"
+    },
+    "authoritative_products": [
+      {
+        "sku": "P-1",
+        "title": "Example Device",
+        "description": "Verified product description",
+        "price": "100.00",
+        "currency": "USD",
+        "availability": "in stock",
+        "image_url": "/images/device.jpg"
+      }
+    ],
+    "published_products": [
+      {
+        "sku": "P-1",
+        "title": "Example Device",
+        "description": "Verified product description",
+        "price": "119.00",
+        "currency": "USD",
+        "availability": "in stock",
+        "image_url": "/images/device.jpg"
+      }
+    ]
+  }
+}
