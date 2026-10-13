@@ -6,6 +6,7 @@ Event payloads must exclude secrets; this journal is not a credential vault.
 import hashlib
 import json
 import sqlite3
+from contextlib import contextmanager
 import time
 import uuid
 from pathlib import Path
@@ -20,11 +21,16 @@ class EventJournal:
         with self.connect() as db:
             db.execute("CREATE TABLE IF NOT EXISTS events (seq INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, event_id TEXT NOT NULL UNIQUE, parent_id TEXT, kind TEXT NOT NULL, payload TEXT NOT NULL, previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL UNIQUE, created_ns INTEGER NOT NULL)")
             db.execute("CREATE INDEX IF NOT EXISTS ix_events_run ON events(run_id,seq)")
+    @contextmanager
     def connect(self):
         db=sqlite3.connect(self.path,timeout=15)
-        db.execute("PRAGMA journal_mode=WAL")
-        db.execute("PRAGMA synchronous=FULL")
-        return db
+        try:
+            db.execute("PRAGMA journal_mode=WAL")
+            db.execute("PRAGMA synchronous=FULL")
+            with db:
+                yield db
+        finally:
+            db.close()
     def append(self,run_id,kind,payload,parent_id=None):
         if not run_id or not kind or not isinstance(payload,dict):
             raise ValueError("invalid journal event")
