@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from .causal_graph import normalize, native_graph
 from .event_journal import EventJournal
+from .workbench_projection import project
 
 PAGE='''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -63,9 +64,9 @@ dt{color:#95a9c4}dd{margin:0;overflow-wrap:anywhere}pre{white-space:pre-wrap;ove
 <section class="summary" id="summary"></section>
 <main class="main">
 <section class="panel"><div class="panelhead"><div><h2>Execution overview</h2><div class="muted">Agent stages and journal-backed tool activity</div></div><span class="muted" id="count"></span></div>
-<div class="lanes" id="lanes"></div><div class="detail-summary" id="business-outcome" aria-label="Observed correction and publication"></div><div class="stageflow" id="stageflow" aria-label="Recorded stage flow"></div>
+<div class="lanes" id="lanes"></div><div class="detail-summary" id="business-outcome" aria-label="Observed correction and publication"></div><div class="stageflow" id="lifecycle" aria-label="Observed operator lifecycle"></div><div class="stageflow" id="stageflow" aria-label="Recorded stage flow"></div>
 <div class="tools"><input aria-label="Search recorded events" id="search" placeholder="Search event name, ID or payload"><select aria-label="Filter activity" id="filter"><option value="all">All activity</option><option value="engineering">Engineering</option><option value="catalog">Catalog</option><option value="system">Orchestration</option></select><button class="btn" id="clear">Clear</button></div>
-<div class="eventwrap"><table><thead><tr><th>#</th><th>Lane</th><th>Observed event</th><th>Parent ID</th><th>Duration / result</th></tr></thead><tbody id="events"></tbody></table></div>
+<div class="tools"><button class="btn" id="operation-mode" aria-pressed="true">Paired operations</button><button class="btn" id="event-mode" aria-pressed="false">Native events</button><span class="muted">Tool pairs use actual parent-event references</span></div><div class="eventwrap"><table><thead><tr><th>#</th><th>Lane</th><th>Observed event</th><th>Parent ID</th><th>Duration / result</th></tr></thead><tbody id="events"></tbody></table></div>
 </section>
 <section class="panel"><div class="panelhead"><div><h2>Evidence inspector</h2><div class="muted">Select an actual journal event</div></div><button class="btn" id="copy">Copy JSON</button></div>
 <div class="details"><h2 id="detail-title">Run overview</h2><div class="detail-summary" id="detail-summary"></div><dl id="metadata"></dl><button class="btn raw-toggle" id="raw-toggle" aria-expanded="false">Show raw evidence JSON</button><pre id="details" tabindex="0" hidden></pre></div></section>
@@ -75,6 +76,7 @@ dt{color:#95a9c4}dd{margin:0;overflow-wrap:anywhere}pre{white-space:pre-wrap;ove
 "use strict";
 const data=JSON.parse(document.getElementById("run-evidence").textContent);
 const nodes=data.execution_graph?.nodes||[];
+const view=data.operator_view||{lifecycle:[],operations:[],stages:[]};
 const status=String(data.state||"UNKNOWN");
 const stateEl=document.getElementById("state");stateEl.textContent=status;stateEl.classList.add(status==="PASS"?"pass":status==="FAILED"?"failed":"");
 const summary=[["Run ID",data.run_id||"UNAVAILABLE"],["Execution",status],["Engineering",data.engineering?.status||"UNOBSERVED"],["Catalog",data.catalog?.status||(data.catalog?.verified?"VERIFIED":"UNOBSERVED")]];
@@ -115,6 +117,7 @@ def build(report, output):
         evidence["execution_graph"]=native_graph(evidence["run_id"],journal.read(evidence["run_id"]))
     else:
         evidence["execution_graph"]=normalize(evidence)
+    evidence["operator_view"]=project(evidence,evidence["execution_graph"])
     # Escape HTML-special characters inside a script raw-text element.
     payload=json.dumps(evidence,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
     destination=Path(output)
