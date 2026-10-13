@@ -108,8 +108,9 @@ def execute(config, output):
                 writeback=policy["catalog_writeback"],
                 approved_digest=config.get("catalog_approved_digest"),
                 authority_policy=config.get("catalog_authority_policy"),
-                approval_grant=config.get("catalog_approval_grant"),
-                approval_key=config.get("approval_verification_key"),
+                approval_grant=(json.loads(Path(config["catalog_approval_grant_file"]).read_text())
+                    if config.get("catalog_approval_grant_file") else config.get("catalog_approval_grant")),
+                approval_key=os.environ.get("AGENTIC_APPROVAL_SIGNING_KEY"),
                 run_id=record["run_id"],
                 effect_ledger_path=str(Path(output).with_suffix(".effects.sqlite3"))))
     else:
