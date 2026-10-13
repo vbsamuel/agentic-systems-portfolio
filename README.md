@@ -1,5 +1,7 @@
 # Agentic Systems Portfolio
 
+> **Current operator release entry point:** [OPERATOR_RELEASE.md](OPERATOR_RELEASE.md) contains the one-command approved local two-model vertical: preserved DeepSeek Git candidate → independently signed SSH review → frozen decision verification → durable HTTP effect → crash reconciliation → actual native child spans → journal DAG → strict machine-generated qualification evidence. The operator must authorize the specific local correction. This implementation has not yet been verified by a new WSL regression, and external production qualification requires a customer-approved HTTPS service and identity trust.
+
 > **Controlling release contract:** [One integrated vertical, six indivisible acceptance gates](INTEGRATED_VERTICAL_RELEASE_CONTRACT.md). A local passing workflow or isolated feature test is not a production release. The operator-approved external publishing effect and external service qualification remain open.
 
 > **Latest workbench tranche:** [Evidence-driven graph and monitor](LIVE_MONITOR.md) now derive displayed stage nodes, unique identities, and recorded sequence links from actual run JSON. Historical ordering must not be mistaken for independently instrumented distributed causality. [Graph normalization](src/agentic_portfolio/causal_graph.py) · [Tests](tests/test_causal_graph.py). The two-model publication is still awaiting separately granted operator approval.
