@@ -26,12 +26,17 @@ def invoke_model(config, prompt):
     request = {"model":config["model"], "messages":[
         {"role":"system","content":config["system_prompt"]},
         {"role":"user","content":prompt}], "temperature":0}
+    if "max_tokens" in config:
+        request["max_tokens"]=int(config["max_tokens"])
     data=json.dumps(request).encode()
     req=Request(config["url"],data=data,method="POST",
                 headers={"Content-Type":"application/json",
                          "Authorization":"Bearer "+config["token"]})
     with urlopen(req,timeout=config["timeout_seconds"]) as response:
-        result=json.loads(response.read(config["max_response_bytes"]))
+        raw=response.read(config["max_response_bytes"]+1)
+        if len(raw)>config["max_response_bytes"]:
+            raise ValueError("model response exceeds configured byte limit")
+        result=json.loads(raw)
     answer=result["choices"][0]["message"]["content"]
     if not isinstance(answer,str) or not answer.strip():
         raise ValueError("empty model response")
