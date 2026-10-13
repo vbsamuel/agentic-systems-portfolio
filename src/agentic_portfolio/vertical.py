@@ -47,6 +47,7 @@ def run(configuration, output):
         base="http://127.0.0.1:"+str(server.server_port)
         config={
             "model_endpoint":configuration["model_endpoint"],
+            "catalog_model_endpoint":configuration.get("catalog_model_endpoint",configuration["model_endpoint"]),
             "engineering":{
                 "repository":str(project),
                 "allowed_files":spec["allowed_files"],
