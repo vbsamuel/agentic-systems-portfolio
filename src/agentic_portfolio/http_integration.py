@@ -8,10 +8,14 @@ import json
 import time
 from dataclasses import dataclass
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, build_opener, HTTPRedirectHandler
 from urllib.error import HTTPError
 from .catalog import report
 from .trace_spans import emit as trace_emit
+
+class RejectRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError("redirect prohibited for authenticated endpoint")
 
 @dataclass(frozen=True)
 class Endpoint:
@@ -25,6 +29,8 @@ class Endpoint:
             raise ValueError('invalid HTTP endpoint')
         if parsed.scheme != 'https' and parsed.hostname not in ('127.0.0.1', 'localhost', '::1'):
             raise ValueError('HTTPS required for non-loopback hosts')
+        if parsed.username or parsed.password or parsed.fragment:
+            raise ValueError('credentials or fragments in endpoint URL prohibited')
         if not self.token:
             raise ValueError('endpoint access token is required')
 
@@ -39,7 +45,7 @@ def call(endpoint: Endpoint, method='GET', payload=None, version=None):
     span=trace_emit("http_call_started",{"method":method,"scheme":urlsplit(endpoint.url).scheme})
     start = time.perf_counter_ns()
     try:
-        with urlopen(req, timeout=endpoint.timeout_seconds) as response:
+        with build_opener(RejectRedirect).open(req, timeout=endpoint.timeout_seconds) as response:
             raw = response.read(16 * 1024 * 1024 + 1)
             if len(raw) > 16 * 1024 * 1024:
                 raise ValueError('response over size limit')
@@ -52,7 +58,7 @@ def call(endpoint: Endpoint, method='GET', payload=None, version=None):
                     'sha256': hashlib.sha256(raw).hexdigest()}
     except HTTPError as exc:
         trace_emit('http_call_failed',{'method':method,'status':exc.code},parent_id=span)
-        raise RuntimeError(f'HTTP {exc.code} for {method} {endpoint.url}') from exc
+        raise RuntimeError(f'HTTP {exc.code} for authenticated {method} endpoint') from exc
 
 def synchronize(catalog: Endpoint, channel: Endpoint, *, writeback=False):
     """Fetch both live endpoints; write only if explicitly enabled and versioned.
