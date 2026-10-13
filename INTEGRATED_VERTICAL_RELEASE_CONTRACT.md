@@ -35,11 +35,14 @@ PYTHONPATH=src python3 -m agentic_portfolio.operator_session \
 
 The session executes two real model inferences, produces one frozen
 proposal, displays observed differences and **requires the human operator
-to type the exact decision digest** before signing/publication. Refusal
-leaves the output `AWAITING_APPROVAL`. Approval cannot bypass stale
+to select **[1] APPROVE, [2] REJECT or [3] DEFER** before signing/publication. A deliberate reject or defer returns a no-write result, not a release PASS. Approval cannot bypass stale
 source and ETag checks, durable prepared-effect checks or independent
 post-write verification. A committed but unacknowledged PUT is reconciled
 by a fresh read, not repeated blindly.
+
+## Current local operator-workbench acceptance
+
+The controlling historical **read-only** acceptance is `python3 -m agentic_portfolio.operator_workbench_acceptance` (command and arguments in [QUICKSTART.md](QUICKSTART.md)). The operator observed **76/76 Python tests PASS**, then `LOCAL_OPERATOR_WORKBENCH_VERTICAL`, RC 0, for run `cc4ec0f2-effd-441a-8ddd-951c18a590af`. The result verified 64 native events, 25 paired tool operations, three stage attempts and all five lifecycle phases. It checks approval validity **at the journal-recorded completion time** rather than granting new permission. Real write authorization still rejects expired approvals. Chrome screenshots confirm layout; full per-control click-through is not separately certified. External production is NOT PERFORMED.
 
 ## Machine acceptance oracle
 
