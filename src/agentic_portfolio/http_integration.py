@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from .catalog import report
+from .trace_spans import emit as trace_emit
 
 @dataclass(frozen=True)
 class Endpoint:
@@ -35,17 +36,22 @@ def call(endpoint: Endpoint, method='GET', payload=None, version=None):
         headers['If-Match'] = version
     body = None if payload is None else json.dumps(payload, sort_keys=True).encode()
     req = Request(endpoint.url, method=method, headers=headers, data=body)
+    span=trace_emit("http_call_started",{"method":method,"scheme":urlsplit(endpoint.url).scheme})
     start = time.perf_counter_ns()
     try:
         with urlopen(req, timeout=endpoint.timeout_seconds) as response:
             raw = response.read(16 * 1024 * 1024 + 1)
             if len(raw) > 16 * 1024 * 1024:
                 raise ValueError('response over size limit')
+            trace_emit('http_call_completed',{'method':method,'status':response.status,
+                       'duration_ms':round((time.perf_counter_ns()-start)/1e6,3),
+                       'response_sha256':hashlib.sha256(raw).hexdigest()},parent_id=span)
             return {'status': response.status, 'body': json.loads(raw),
                     'etag': response.headers.get('ETag'),
                     'duration_ms': round((time.perf_counter_ns()-start)/1e6,3),
                     'sha256': hashlib.sha256(raw).hexdigest()}
     except HTTPError as exc:
+        trace_emit('http_call_failed',{'method':method,'status':exc.code},parent_id=span)
         raise RuntimeError(f'HTTP {exc.code} for {method} {endpoint.url}') from exc
 
 def synchronize(catalog: Endpoint, channel: Endpoint, *, writeback=False):
