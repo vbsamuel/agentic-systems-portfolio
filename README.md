@@ -44,3 +44,24 @@ GitHub Actions runs the tests and both-workflow example on pushes and pull reque
 ## Evidence and authorship
 
 See [PROVENANCE.md](PROVENANCE.md). This is newly authored reference code and does not relabel upstream forks as original work. Test results, deployments, users, production tenure and measurable business benefit are separate claims requiring operational evidence.
+
+
+## Stage-by-stage measurable end-to-end qualification
+
+Run from repository root:
+
+```bash
+cd ~/agentic-systems-portfolio
+git pull --ff-only origin main
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m agentic_portfolio.qualification --output artifacts/qualification.json
+cat artifacts/qualification.json
+```
+
+The qualification is **executed**, not a static report: it creates a real temporary Git repository, runs passing and intentionally failing validation commands, exercises reviewer gating and source-drift rejection, writes two independent product CSV snapshots, opens a price discrepancy, prevents premature closure, modifies the observed channel snapshot, and independently rechecks before case closure.
+
+Each stage records the workflow, name, measured wall-clock duration in milliseconds, actual observation, and pass/fail evaluation. GitHub Actions must execute the qualification and retain the JSON report as a build artifact.
+
+**Qualification boundaries:** Passing these local tests proves only the stated local execution paths. It does **not** certify autonomous LLM agents, a production Git authoring pipeline, authenticated PIM/ERP/CMS integrations, automatic catalog corrections, external runtime reliability, tenant isolation, security sandboxing, customer use, or production impact. Those must be built and independently tested in subsequent tranches before a production claim.
+
+**Stage acceptance:** An expected negative path is a pass only when the dangerous operation is actually rejected. Any failed expectation marks the aggregate qualification failed. See [qualification.py](src/agentic_portfolio/qualification.py) and [qualification tests](tests/test_qualification.py).
