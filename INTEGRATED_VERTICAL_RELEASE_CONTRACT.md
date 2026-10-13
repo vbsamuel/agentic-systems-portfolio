@@ -1,33 +1,85 @@
-# One integrated vertical: release contract and evidence boundary
+# Indivisible six-gate integrated vertical — controlling release contract
 
-**Release unit:** One actual run, not six independent feature demos.
+The release unit is **one actual two-model execution** carried from the
+initial failing-code observation through a human-approved HTTP correction
+with the **same run ID**, native execution journal, and independently
+verifiable qualification output. Isolated tests or attractive UI do not
+satisfy this contract.
 
-## Immutable acceptance invariants
+## First-principles correctness properties
 
-1. **Event identity:** Every coordinator stage has a native journal event ID, run ID, durable sequence, parent reference, timestamp and hash. Instrumented model/tool child spans must identify the invoking stage and their real input/output digests; mere inferred stage order is not sufficient.
-2. **Graph fidelity:** The interactive DAG must derive nodes and parent/dependency edges from journal records, validate causal ancestry and clearly identify unobserved or inferred relationships. Rendering decorative stages does not satisfy this gate.
-3. **Single external effect:** A catalog correction must bind the exact observed source digest, published ETag, approved decision, immutable target payload and idempotency key. Crash recovery must reconcile whether the HTTP write already committed *before* any retry. Ambiguous effects must hold for operator review, not replay blindly.
-4. **Authenticated review:** An authorized human must approve the exact proposed effect and the grant must bind reviewer identity, run identity, decision digest, scope and expiry. A signature generated from a locally configured HMAC key proves key possession; **identity proof requires a trusted external identity provider**. A plain approval boolean or digest alone is insufficient.
-5. **True post-effect verification:** The real model decision, signed grant, HTTP mutation, independent GET, zero-difference comparison and final state must all belong to the same run evidence. Until this is observed, the two-model run is not qualified.
-6. **External production interoperability:** Real customer-approved PIM/CMS and source APIs must pass authentication, ETag/conditional write or equivalent versioning, rate-limit and error semantics, production-like failure injection, authorization review, security testing and load/recovery measurement. A local SQLite service is an integration test, **not** qualification against external production infrastructure.
+| Mandatory gate | Required invariant | Current implementation |
+|---|---|---|
+| Native model/tool child spans | Every real inference, Git/validation and HTTP call records a native event ID, invoking-stage parent, input/output digest or measured outcome and duration | `trace_spans.py`; instrumented `integrated_run.py`, `repair_agent.py`, `http_integration.py`, `live_e2e.py` |
+| Journal-driven DAG | Nodes and edges come from actual journal event IDs and parent links, not illustrative sequence arrows | `event_journal.py`, `causal_graph.py`, `workbench.py`, `live_monitor.py`; integrity-checked SQLite WAL journal |
+| Crash-safe publication reconciliation | Persist the exact proposed effect before PUT; never auto-repeat an uncertain external effect; reconcile actual remote post-crash state | `effect_ledger.py` with FULL synchronous WAL, source digest/ETag binding, no-blind-replay recovery in `catalog_agent.py`, exclusive operator lock |
+| Authenticated proposal-bound approval | Reviewer signs run, decision digest, scope and expiry; validation uses independently pinned public-key trust root | `ssh_approval.py`, operator reviewer trust file, frozen reviewed decision and independent re-verification in evidence export |
+| Two-model authorized publication | Both actual model decisions, verified Git candidate, signed grant, real conditional HTTP PUT, independent GET and zero residual differences | `operator_session.py` → `operator_review.py` → `operator_release.py` → `export_qualification.py`, one run ID |
+| External production integration and qualification | Real customer-authorized HTTPS source/channel APIs, trusted reviewer identity, provider contract tests, failure/recovery, load/security and operational measurement | Generic HTTPS JSON/ETag adapter and read-only `external_conformance.py` exist. **Actual customer production integration and qualification remain unperformed without access and service credentials** |
 
-## Work completed and boundaries
+## One operator command, one release decision
 
-- **Previously observed:** Real DeepSeek engineering correction, independently verified Git candidate, local HTTP catalog correction (deterministic path), live two-model catalog `CORRECT` decision, 43/43 automated tests at commit `3cf3cd6` (user-observed).
-- **Implemented in subsequent tranche, not yet operator qualified:** HMAC-SHA256 scoped approval grant with exact run/digest/expiry and rejection tests; model-governed publication now requires such a grant in addition to existing source/version checks.
-- **Still unclosed:** End-to-end replay-safe external effect ledger, native model/tool-call child spans, journal-driven graph using those native children, proof of a real signed-grant local publication, authenticated identity provider, and actual external deployment qualification.
+See [OPERATOR_RELEASE.md](OPERATOR_RELEASE.md) for the complete WSL procedure.
+The main entry is:
 
-## Do not bypass the pending decision
+```bash
+cd ~/agentic-systems-portfolio
 
-The real catalog review is `AWAITING_APPROVAL`; run ID
-`31398dd5-ef83-4ac4-8124-efbacf17e44e`, reviewed digest
-`e8b1b13926564ee73ab7965e54812002e7e76e2ce14825f72949a8e34d5c94ca`.
-The reviewer must examine and explicitly authorize publication of SKU `P-1` at the authoritative local price. No signed grant was supplied for this run.
+PYTHONPATH=src python3 -m agentic_portfolio.operator_session \
+  --base-config config/local-vertical.example.json \
+  --run-root artifacts/operator-runs \
+  --reviewer local-agentic-reviewer \
+  --ssh-private-key "$HOME/.ssh/agentic-approval-ed25519" \
+  --allowed-signers "$HOME/.config/agentic-systems-portfolio/allowed_signers"
+```
 
-The HMAC key must never be committed. The current key is a local trust mechanism only, and this release is **blocked** pending a proper authenticated operator flow and corresponding observed result.
+The session executes two real model inferences, produces one frozen
+proposal, displays observed differences and **requires the human operator
+to type the exact decision digest** before signing/publication. Refusal
+leaves the output `AWAITING_APPROVAL`. Approval cannot bypass stale
+source and ETag checks, durable prepared-effect checks or independent
+post-write verification. A committed but unacknowledged PUT is reconciled
+by a fresh read, not repeated blindly.
 
-## Release evidence to commit after qualification
+## Machine acceptance oracle
 
-A *redacted*, machine-generated run report; journal hash-chain verification result; root and child event spans; Git candidate SHA; source/channel digests and ETags; exact decision+grant digest (not signing secret); pre/post HTTP observations; failure-injection results; supported external adapter contract tests; environment and deployed service revision; and an explicit closing or failing gate decision.
+The strict exporter `export_qualification.collect` refuses to issue
+`LOCAL_TWO_MODEL_VERTICAL_PASS` unless all of these are observed:
 
-**Release classification: NOT QUALIFIED.** Do not claim completed production deployment or 100% release until every invariant is observed in one integrated run.
+- Top-level same-run `PASS`, engineering verified Git commit and retained ref.
+- Actual catalog `VERIFIED`, observed effect identified, durable ledger
+  `VERIFIED`, and independent post-write comparison `PASS` with no findings.
+- Native journal hash-chain verified and finalized with **two completed real
+  inference spans**, Git validation operations and HTTP operations.
+- Original signed SSH reviewer grant independently verified again using the
+  reviewer public-key trust file, bound to the identical run and decision.
+- Qualification artifact contains source report digest, last journal hash,
+  native span counts, effect identity, and public approval attestation.
+
+No "success" branch is permitted for absent evidence or failed invariants.
+Tests deliberately include tampering, missing/expired/mismatched approvals,
+untrusted source, invalid graph parents, interrupted publication, no
+blind retry, concurrent writer rejection, missing spans and missing journal.
+
+## Qualification status — precise boundary
+
+**Observed before this tranche:** 46/46 automated tests PASS on commit
+`65b6ac5`; real DeepSeek engineering repair and catalog decision, local
+deterministic publication, and read-only monitor worked in prior user
+execution. These prove their described stages only.
+
+**New implementation after that evidence:** The fully integrated,
+reviewer-signed, effect-ledger-protected operator session, native span
+instrumentation and strict final exporter have been committed. The new
+regression suite and the newly instrumented full live run **have not
+yet been observed passing on the user's WSL machine**.
+
+**External production:** not qualified. No customer PIM/CMS endpoint,
+production credential, identity provider or externally measured operation
+was provided. A local SQLite-backed service is a legitimate real HTTP
+integration test, not proof of a customer production environment.
+
+**Final verdict today:** code implemented for a locally operator-run six-gate
+vertical; local acceptance and external production release are **not yet
+closed by observed evidence**. Never assert production deployment or
+business outcomes without independently verifiable records.
