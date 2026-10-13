@@ -1,58 +1,35 @@
-# Operator-ready integrated vertical — one release verdict
+# Operator release: one integrated two-agent vertical
 
-**Purpose:** Qualify the existing two-agent run from its actual reviewed decision to
-a verified publication. This is *one end-to-end local release unit*, not a set
-of independently accepted subfeatures.
+**Release unit:** One real run from defect and catalog inputs through two model
+inferences, independently verified code correction, an exact human-reviewed
+catalog decision, a durable HTTP effect, independent post-write verification,
+native event tracing and one machine-generated qualification artifact.
 
-This procedure never generates fake agent decisions. The existing DeepSeek
-engineering repair and price review remain the input. The final action reuses
-the persisted Git candidate, revalidates the frozen catalog proposal against
-current HTTP observations, requires a separately held SSH reviewer private key,
-performs a single ETag-bound HTTP PUT, rereads the published records, verifies
-the native event journal and durable effect ledger, then exports the factual
-local evidence and updated interactive workbench.
+**Controlling implementation:** `agentic_portfolio.operator_session`. Do
+not qualify six isolated demos or claim a production release because individual
+unit tests pass.
 
-## Confirmed historical input
+## 1. Requirements and safety
 
-Run ID: `31398dd5-ef83-4ac4-8124-efbacf17e44e`.
+This guide runs the bundled **real local SQLite-backed HTTP service** and
+your configured LM Studio model. It will mutate the published price in that
+local service only after you explicitly authorize the displayed digest.
+It does **not** connect to or mutate a customer website by default.
 
-Engineering candidate: `ed39b89c79094e9b949635bf778df8f9facd9e85`.
+Your previously recorded two-model run
+`31398dd5-ef83-4ac4-8124-efbacf17e44e` remains legitimate historical
+evidence, but it predates native inference and tool child spans. It cannot
+be retroactively represented as a complete six-gate native trace. For
+definitive qualification, create one new instrumented session and approve
+the subsequent publication **under that same run ID**.
 
-Reviewed catalog decision: `CORRECT`, SKU `P-1`, published price
-`119.00`, authoritative price `100.00`.
+The last operator-confirmed test baseline was **46/46 PASS**, before this
+new tranche. These new changes must be independently run and inspected on WSL.
 
-Decision digest:
-`e8b1b13926564ee73ab7965e54812002e7e76e2ce14825f72949a8e34d5c94ca`.
+## 2. One-time reviewer trust setup
 
-The last operator-confirmed suite before this tranche was **46/46 PASS** on
-`65b6ac5`. The new code and tests remain unqualified until the operator
-executes them. The reviewed local publication has **not** been executed or
-authorized by the observed conversation so far.
-
-## 1. Qualify the code
-
-```bash
-cd ~/agentic-systems-portfolio
-
-git pull --ff-only origin main
-PULL_RC=$?
-if [ "$PULL_RC" -eq 0 ]; then
-    PYTHONPATH=src python3 -m unittest discover -s tests -v
-    TEST_RC=$?
-    printf '\nTEST_RC=%s\n' "$TEST_RC"
-else
-    printf '\nPULL_RC=%s\n' "$PULL_RC"
-fi
-```
-
-If tests are red, do **not** proceed to the publication step. Repair the
-failed invariants first. This shell block never runs `exit 1` or closes a
-terminal on failure.
-
-## 2. Establish your reviewer key and trust root
-
-Use your existing approved SSH signing key or create a **separate, personal
-reviewer key** on your WSL machine. A dedicated key may be created with:
+Use an existing SSH signing key whose public key is trusted by your
+organization, or create a dedicated, passphrase-protected personal key:
 
 ```bash
 cd ~/agentic-systems-portfolio
@@ -70,109 +47,125 @@ printf 'local-agentic-reviewer %s\n' \
 chmod 600 "$HOME/.config/agentic-systems-portfolio/allowed_signers"
 ```
 
-Choose a passphrase when prompted. Do not overwrite an existing private key;
-use an approved existing key instead. `allowed_signers` is a pinned
-public-key trust file. **The runtime never needs the SSH private key except
-during the explicit operator signing action**. No key material is committed.
+Do not overwrite an existing private key. A passphrase is recommended.
+The runtime checks the private-key signature against the public-key trust
+file and binds it to reviewer ID, run ID, scope, exact proposal digest and
+expiry. A reviewer-held SSH key is much stronger than an unchecked checkbox.
+This does **not** substitute for independently established enterprise
+identity/SSO, role provisioning and revocation.
 
-This is cryptographically authenticated **local reviewer-key possession**,
-not enterprise SSO or a validated customer identity-provider assertion.
-
-## 3. Review, then explicitly authorize the local effect
-
-Inspect the review JSON and confirm that the actual proposal, run, SKU,
-source-of-truth policy and target price match your intended operation.
-
-Only after the operator actually authorizes this specific **local** catalog
-correction, run:
+## 3. Qualify current code before operating
 
 ```bash
 cd ~/agentic-systems-portfolio
 
-PYTHONPATH=src python3 -m agentic_portfolio.operator_release \
-  --config /tmp/agentic-two-model-review.json \
-  --report artifacts/two-model-review.json \
+git pull --ff-only origin main
+PULL_RC=$?
+
+if [ "$PULL_RC" -eq 0 ]; then
+    PYTHONPATH=src python3 -m unittest discover -s tests -v
+    TEST_RC=$?
+    printf '\nTEST_RC=%s\n' "$TEST_RC"
+else
+    printf '\nPULL_RC=%s\n' "$PULL_RC"
+fi
+```
+
+**Stop before publication if any test fails.** The shell remains open.
+Do not use `set -e` or `exit 1`.
+
+## 4. One executable vertical and one human approval
+
+Check the configured LM Studio model is loaded using `lms ps`.
+Run the following **only if you intend to review and potentially authorize
+the displayed correction to the local test publishing service**:
+
+```bash
+cd ~/agentic-systems-portfolio
+
+PYTHONPATH=src python3 -m agentic_portfolio.operator_session \
+  --base-config config/local-vertical.example.json \
+  --run-root artifacts/operator-runs \
   --reviewer local-agentic-reviewer \
   --ssh-private-key "$HOME/.ssh/agentic-approval-ed25519" \
-  --allowed-signers "$HOME/.config/agentic-systems-portfolio/allowed_signers" \
-  --evidence evidence/local-two-model-final-qualification.json \
-  --workbench artifacts/agent-execution-workbench.html \
-  --confirm-local-publish
+  --allowed-signers "$HOME/.config/agentic-systems-portfolio/allowed_signers"
 
 RELEASE_RC=$?
-printf '\nLOCAL_RELEASE_RC=%s\n' "$RELEASE_RC"
+printf '\nINTEGRATED_RELEASE_RC=%s\n' "$RELEASE_RC"
 ```
 
-**Safety:** The command has an explicit mutation-confirmation flag. Do not
-execute it without personally approving this precise effect. No general
-request to finish software development substitutes for reviewer consent.
+The command creates a fresh unique workspace/config/report, starts its
+SQLite HTTP service, reproduces a real failing Git test, obtains an actual
+model-authored correction, validates it and persists a candidate commit.
+The second model invocation uses real HTTP observations and an explicit
+source-of-truth policy, then displays the **actual** SKU, mismatches,
+model rationale and decision digest.
 
-The workflow refuses stale source/ETag observations, wrong reviewer keys,
-mismatched proposal digests, concurrent runs, stale Git refs or invalid
-verification. If an HTTP acknowledgment is lost, the effect remains durable
-and the next attempted closure reconciles the actual published state **without
-blindly replaying the PUT**. A still-unchanged or ambiguous effect is held for
-review rather than automatically retried.
+At the prompt, inspect the findings. To authorize the exact local
+publication, **type the entire displayed decision digest**. Any other input
+retains the review and stops with no publication.
 
-## 4. Definitive evidence and workbench
+If approved, the same run verifies a reviewer-held SSH signature, freezes
+the actual model proposal (no fresh model inference), checks source
+digests/ETag, writes a PREPARED effect ledger entry, applies a conditional
+HTTP PUT, rereads the service, independently verifies all product fields,
+finalizes the effect record, verifies both model/tool native spans and the
+event-journal hash chain, and exports evidence and the DAG workbench.
 
-A successful command writes:
-- `artifacts/two-model-review.json`: original run ID and full observed
-  engineering and catalog results
-- `artifacts/two-model-review.events.sqlite3`: native parent-linked and
-  hash-chained events (including actual Git/test/model/HTTP operation spans)
-- `artifacts/two-model-review.effects.sqlite3`: prepared effect and verified
-  reconciliation state
-- `evidence/local-two-model-final-qualification.json`: strict, machine-derived
-  summary proving source Git candidate, journal integrity, and durable effect
-- `artifacts/agent-execution-workbench.html`: real event DAG and evidence UI
+**Failure semantics:** When effects are ambiguous, publication is held;
+the system does not blindly retry the PUT. A second attempted closure
+checks actual remote state before taking another action. Concurrent
+operator executions targeting one report are blocked.
 
-The CLI produces `PASS` **only** when all of those observed checks succeed.
-Review evidence content before committing it; remove any confidential
-customer data. Do not commit private config or signing keys.
+## 5. Required result and evidence
 
-```bash
-cd ~/agentic-systems-portfolio
+A successful run prints `LOCAL_TWO_MODEL_VERTICAL_PASS`, including
+the unique run ID and actual artifact paths. Files are retained together:
 
-git status --short
-python3 -m json.tool evidence/local-two-model-final-qualification.json
+- `run.json`: both agent outcomes, diff, source digests, approval review,
+  observed writeback and post-write independent comparison
+- `run.events.sqlite3`: transactionally persisted, parent-linked native
+  inference, Git, validation and HTTP spans with hash-chain verification
+- `run.effects.sqlite3`: PREPARED → VERIFIED or explicit uncertain outcome
+- `qualification.json`: **strict** machine-produced acceptance decision
+- `workbench.html`: interactive evidence-driven DAG for that run
+- `runtime.json`: private configuration, mode 0600, do not commit
 
-git add evidence/local-two-model-final-qualification.json
-git commit -m "evidence: qualified local two-model integrated vertical"
-git push origin main
-```
+The exporter fails if one model invocation or a required child-tool trace
+is absent, if reviewer SSH evidence is missing, if the Git candidate is not
+retained, if the final HTTP comparison is not clean, or if the durable effect
+is not VERIFIED. There is no fallback fabricated PASS.
 
-Commit and push only if `LOCAL_RELEASE_RC=0` and the evidence file exists
-and is accurate. Do not create or push a manufactured PASS artifact.
+You may then inspect and commit the **redacted, nonsecret**
+`qualification.json` to the repository's `evidence/` folder. Never
+commit the private runtime config, a review private key, access tokens or
+unredacted customer data. A successful local run is not proof of production
+deployment.
 
-## 5. External connector and production qualification
+## 6. External service qualification (additional, never inferred)
 
-The real production endpoint is not known from the supplied conversation and
-no production credentials were provided. The runtime supports configured
-authenticated HTTPS catalog/channel endpoints with ETag/CAS; the bundled
-SQLite service is a **real local integration service**, not a customer PIM/CMS.
+The configured JSON HTTP contract can target real authenticated HTTPS
+source/publishing services. However, a real customer service, supported
+credentials, reviewer identity provider and service-specific API contract
+have **not** been supplied or tested in this conversation.
 
-Given a privately supplied external endpoint configuration, execute the
-non-mutating conformance check:
+For an authorized external provider, perform the non-mutating endpoint
+conformance check with a **private** configuration:
 
 ```bash
 cd ~/agentic-systems-portfolio
 
 PYTHONPATH=src python3 -m agentic_portfolio.external_conformance \
-  --config /path/to/authorized-external-runtime.json \
-  --output evidence/external-endpoint-preflight.json
+  --config /actual/private/external-runtime.json \
+  --output evidence/external-preflight.json
 ```
 
-That proves only read-only schema/auth/version conformance. Production signoff
-also requires authorized write/readback against a provider-owned sandbox or
-production-equivalent, rate limit/error/failure tests, security assessment,
-secret rotation, and an independently reviewed identity provider.
-**No external production PASS is claimed or generated by the local tool.**
+This checks nonloopback HTTPS, token authentication, field schema,
+channel ETag/versioning and live reconciliation. It is **read-only**
+preflight, not production signoff. A customer-approved sandbox must
+then qualify actual authorized writes, rate limits, retry/recovery,
+security, identity lifecycle and load. No production PASS is invented.
 
-## One release decision
-
-- `LOCAL_TWO_MODEL_VERTICAL_PASS`: only after the actual approved live write,
-  independent readback, native journal, Git and effect-ledger qualification.
-- `EXTERNAL_READ_ONLY_PREFLIGHT`: external connectivity check, not release.
-- `PRODUCTION_RELEASE_PASS`: **not supported as a claim** without independent
-  external integration, operational security and reliability evidence.
+**Release classification:** Local integrated qualification is attainable
+with the operator session; full external production qualification remains
+blocked until independently observed on the actual target service.
