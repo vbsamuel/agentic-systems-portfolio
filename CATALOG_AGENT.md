@@ -1,4 +1,4 @@
-# Catalog agent: actual model decision and source-bound publication
+> **Historical implementation note.** This document describes an earlier development tranche. The controlling operator procedure is [OPERATOR_RELEASE.md](OPERATOR_RELEASE.md), using one fresh instrumented run, a frozen catalog decision, explicit SSH-signed reviewer approval, crash-safe no-blind-retry effect reconciliation, and strict evidence export. Do not use older digest-only or regenerated-proposal commands as production instructions.\n\n# Catalog agent: actual model decision and source-bound publication
 
 The [catalog agent](src/agentic_portfolio/catalog_agent.py) inspects genuine
 authenticated catalog and published-channel HTTP observations. It calls a
