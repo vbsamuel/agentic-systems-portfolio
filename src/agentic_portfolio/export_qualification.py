@@ -36,6 +36,11 @@ def collect(report_path):
     events=journal.read(report["run_id"])
     if not events or events[-1]["kind"]!="execution_finalized":
         raise ValueError("release evidence refused: final native event missing")
+    event_kinds=[e["kind"] for e in events]
+    required={"model_call_started","model_call_completed","git_call_started",
+              "validation_completed","http_call_started","http_call_completed"}
+    if not required.issubset(set(event_kinds)) or event_kinds.count("model_call_completed")<2:
+        raise ValueError("release evidence refused: native inference and tool spans incomplete")
     workspace=report.get("vertical_workspace")
     if not workspace:
         raise ValueError("release evidence refused: source workspace unspecified")
@@ -47,6 +52,9 @@ def collect(report_path):
         raise ValueError("release evidence refused: candidate ref invalid")
     if git("rev-parse","HEAD")!=eng["base_revision"]:
         raise ValueError("release evidence refused: source branch drift")
+    approval=catalog.get("approval_evidence") or {}
+    if approval.get("auth_type")!="openssh" or not approval.get("signature_sha256"):
+        raise ValueError("release evidence refused: SSH identity-bound review evidence missing")
     effect_id=catalog.get("effect_id")
     if not effect_id:
         raise ValueError("release evidence refused: publication effect identity missing")
@@ -65,6 +73,9 @@ def collect(report_path):
         "catalog_status":catalog["status"],
         "stage_count":len(report.get("stages",[])),
         "native_event_count":len(events),
+        "native_model_invocations":event_kinds.count("model_call_completed"),
+        "native_http_calls":event_kinds.count("http_call_completed"),
+        "native_git_calls":event_kinds.count("git_call_completed"),
         "journal_last_hash":events[-1]["event_hash"],
         "source_report_sha256":hashlib.sha256(path.read_bytes()).hexdigest(),
         "external_production_qualification":"NOT_PERFORMED"
