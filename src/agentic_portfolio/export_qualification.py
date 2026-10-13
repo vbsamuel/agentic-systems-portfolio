@@ -42,6 +42,26 @@ def collect(report_path, allowed_signers=None):
               "validation_completed","http_call_started","http_call_completed"}
     if not required.issubset(set(event_kinds)) or event_kinds.count("model_call_completed")<2:
         raise ValueError("release evidence refused: native inference and tool spans incomplete")
+    by_id={event["event_id"]:event for event in events}
+    span_pairs={
+        "model_call_completed":"model_call_started",
+        "model_call_failed":"model_call_started",
+        "git_call_completed":"git_call_started",
+        "validation_completed":"validation_started",
+        "http_call_completed":"http_call_started",
+        "http_call_failed":"http_call_started"}
+    native_starts={"model_call_started","git_call_started",
+                   "validation_started","http_call_started"}
+    for event in events:
+        kind=event["kind"]
+        if kind in native_starts:
+            parent=by_id.get(event["parent_id"])
+            if not parent or parent["kind"]!="stage_started":
+                raise ValueError("release evidence refused: tool/inference span lacks native stage parent")
+        if kind in span_pairs:
+            parent=by_id.get(event["parent_id"])
+            if not parent or parent["kind"]!=span_pairs[kind]:
+                raise ValueError("release evidence refused: completed span lacks its started-call parent")
     workspace=report.get("vertical_workspace")
     if not workspace:
         raise ValueError("release evidence refused: source workspace unspecified")
