@@ -68,18 +68,9 @@ blind retry, concurrent writer rejection, missing spans and missing journal.
 deterministic publication, and read-only monitor worked in prior user
 execution. These prove their described stages only.
 
-**New implementation after that evidence:** The fully integrated,
-reviewer-signed, effect-ledger-protected operator session, native span
-instrumentation and strict final exporter have been committed. The new
-regression suite and the newly instrumented full live run **have not
-yet been observed passing on the user's WSL machine**.
-
-**External production:** not qualified. No customer PIM/CMS endpoint,
+**Subsequent operator-confirmed execution:** The integrated local workflow returned `LOCAL_TWO_MODEL_VERTICAL_PASS` and `INTEGRATED_RELEASE_RC=0` on 2026-10-13 for run `8b5d0b96-6c30-4ea3-8d01-9919e44052e6`. See [the release record](LOCAL_RELEASE_2026-10-13.md). The local generated artifacts have not yet been copied into the remote repository; the record is grounded in the operator-visible result, not an independent inspection of those local files.\n\n**External production:** not qualified. No customer PIM/CMS endpoint,
 production credential, identity provider or externally measured operation
 was provided. A local SQLite-backed service is a legitimate real HTTP
 integration test, not proof of a customer production environment.
 
-**Final verdict today:** code implemented for a locally operator-run six-gate
-vertical; local acceptance and external production release are **not yet
-closed by observed evidence**. Never assert production deployment or
-business outcomes without independently verifiable records.
+**Final verdict:** **LOCAL_TWO_MODEL_VERTICAL_PASS — confirmed by operator output.** **External production qualification: NOT_PERFORMED.** The local acceptance contract is closed; production deployment and integration remain distinct unqualified obligations.\n
