@@ -235,6 +235,35 @@ Opening the HTML in Chrome is still necessary to verify browser layout and
 interactions: automated evidence acceptance is not a claim of visual
 publisher-quality acceptance.
 
+## Final Chrome operator interaction acceptance
+
+After the read-only acceptance command returns `LOCAL_OPERATOR_WORKBENCH_VERTICAL`
+with RC 0, refresh the regenerated local `workbench.html` in Chrome.
+Verify these interactions on the **same preserved run**, without model calls
+or HTTP publication:
+
+1. The starting inspector displays the signed-approval, publication,
+   independent-readback and operation-count overview; the table's Lane
+   column shows `engineering` on one line at desktop width.
+2. Select **Catalog** and confirm only its recorded operations remain.
+   Select **All activity** to reset the filter.
+3. Select **Paired operations**, then select an observed HTTP operation.
+   The inspector must display its actual start/completion identifiers and
+   any recorded result or duration. Select **Inspect completion event**
+   to navigate to the exact native journal record.
+4. Select **Inspect causal parent** on an operation whose parent is
+   recorded. Verify that the inspector shows the actual native parent ID
+   rather than an inferred dependency.
+5. Switch between **Native events** and **Paired operations**, search by
+   event identifier, select a stage attempt, then clear the search.
+   Check that the original 64-event denominator is preserved.
+6. Toggle raw evidence JSON on and off. The default view must remain
+   concise, and no panel should overlap or conceal controls.
+
+A screenshot verifies layout but does not demonstrate every click.
+For complete browser interaction closure, record the results of these
+six checks. This is a read-only local console, not a live control plane.
+
 ## Recovery without starting from scratch
 
 **Catalog model returned an empty response or failed after engineering verified:** Use the **exact failed report path** from the `REVIEW_STARTED` output:
