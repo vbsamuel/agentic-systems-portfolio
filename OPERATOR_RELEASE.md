@@ -19,12 +19,9 @@ It does **not** connect to or mutate a customer website by default.
 Your previously recorded two-model run
 `31398dd5-ef83-4ac4-8124-efbacf17e44e` remains legitimate historical
 evidence, but it predates native inference and tool child spans. It cannot
-be retroactively represented as a complete six-gate native trace. For
-definitive qualification, create one new instrumented session and approve
-the subsequent publication **under that same run ID**.
+be retroactively represented as a complete six-gate native trace. For a new qualification, create one instrumented session and approve\nthe publication **under that same run ID**. The operator has already\ncompleted a qualified local session under run\n`8b5d0b96-6c30-4ea3-8d01-9919e44052e6`; see [release record](LOCAL_RELEASE_2026-10-13.md).
 
-The last operator-confirmed test baseline was **46/46 PASS**, before this
-new tranche. These new changes must be independently run and inspected on WSL.
+The operator confirmed **68/68 PASS** on the earlier 2026-10-13 tranche. An interim diagnostic-message assertion regression was corrected. The final operator release command subsequently returned **LOCAL_TWO_MODEL_VERTICAL_PASS**, exit code 0. The exact execution and limitations are recorded in [LOCAL_RELEASE_2026-10-13.md](LOCAL_RELEASE_2026-10-13.md).
 
 ## 2. One-time reviewer trust setup
 
@@ -166,6 +163,4 @@ preflight, not production signoff. A customer-approved sandbox must
 then qualify actual authorized writes, rate limits, retry/recovery,
 security, identity lifecycle and load. No production PASS is invented.
 
-**Release classification:** Local integrated qualification is attainable
-with the operator session; full external production qualification remains
-blocked until independently observed on the actual target service.
+**Release classification:** A real operator session completed with\n`LOCAL_TWO_MODEL_VERTICAL_PASS` and exit code 0 on 2026-10-13.\nFull external customer production qualification is **NOT_PERFORMED**.
