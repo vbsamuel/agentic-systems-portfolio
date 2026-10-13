@@ -10,92 +10,77 @@ from pathlib import Path
 from .causal_graph import normalize, native_graph
 from .event_journal import EventJournal
 
-PAGE='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Agent Execution | Evidence Workbench</title><style>
-:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui;background:#090d16;color:#e6eaf2}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% -15%,#1b2949 0%,#0a0e17 45%)}
-header{padding:22px 32px;border-bottom:1px solid #263045;display:flex;align-items:center;justify-content:space-between}
-h1{font-size:19px;margin:0;letter-spacing:-.4px}small,.muted{color:#91a0bb}
-.pill{border:1px solid #39445c;border-radius:30px;padding:6px 12px;font-size:12px}
-main{padding:24px 32px;max-width:1700px;margin:auto}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
-.metric,.panel{border:1px solid #263249;background:#11192aee;border-radius:12px}
-.metric{padding:17px}.metric strong{display:block;font-size:21px;margin-top:9px}.label{font-size:11px;letter-spacing:1px;color:#93a4c0;text-transform:uppercase}
-.layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:16px}
-.panel{padding:20px;min-width:0}h2{font-size:14px;font-weight:600;margin:0 0 18px}
-.canvas{display:grid;grid-template-columns:1fr 45px 1fr 45px 1fr;align-items:center;gap:0}
-.node{padding:18px 12px;border:1px solid #35435b;background:#161f31;border-radius:9px;min-height:120px;cursor:pointer;text-align:left;color:inherit;width:100%}
-.node:hover,.node:focus{border-color:#7eabff;background:#1e2a43;outline:0}.node strong{display:block;font-size:13px;margin:9px 0}.node span{font-size:12px;color:#96a6c4}
-.line{height:2px;background:#426183;position:relative}.line:after{content:"";position:absolute;right:0;top:-4px;border-left:7px solid #638abb;border-top:5px solid transparent;border-bottom:5px solid transparent}
-.ok{color:#67dfb0}.blocked{color:#f5c979}.failed{color:#ff899b}
-.timeline{margin:0;padding:0;list-style:none}.timeline li{border-left:2px solid #304768;padding:0 0 18px 18px;margin-left:5px;position:relative}.timeline li:before{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#5d99ed;left:-5px;top:3px}.timeline button{background:none;border:0;color:#e2e9f7;text-align:left;font:inherit;cursor:pointer;padding:0}
-pre{font-size:12px;line-height:1.6;overflow:auto;max-height:560px;white-space:pre-wrap;overflow-wrap:anywhere;color:#c8d7ec}
-#details{background:#0b1220;padding:16px;border:1px solid #253552;border-radius:8px;min-height:210px}
-footer{padding:22px 32px;font-size:11px;color:#8393ad}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}}@media(max-width:650px){.metrics{grid-template-columns:1fr 1fr}.canvas{grid-template-columns:1fr;gap:10px}.line{width:2px;height:20px;justify-self:center}.line:after{top:15px;right:-4px;transform:rotate(90deg)}header,main{padding:16px}}
-</style></head><body>
-<header><div><div class="label">Evidence-backed orchestration</div><h1>Agent Execution Workbench</h1></div><span class="pill" id="state"></span></header>
-<main><section class="metrics" id="metrics"></section><div class="layout">
-<section class="panel"><h2>Execution dependency graph</h2><div class="canvas" id="dag"></div><h2 style="margin-top:30px">Observed stages</h2><ol class="timeline" id="timeline"></ol></section>
-<section class="panel"><h2>Evidence inspector <small>· select a stage</small></h2><pre id="details" tabindex="0"></pre></section>
-</div></main><footer>Source: immutable exported run JSON · Read-only · No inferred, fabricated or simulated events · Not a control plane</footer>
-<script type="application/json" id="run-evidence">__EVIDENCE__</script>
+PAGE='''<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Execution Control | Agentic Systems</title>
+<style>
+:root{font:14px/1.45 Inter,Segoe UI,system-ui,sans-serif;color:#dce5f4;background:#0a101b}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}
+button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #8db9ff;outline-offset:2px}
+.shell{min-height:100vh;display:grid;grid-template-rows:auto auto 1fr}
+.topbar{padding:16px 24px;border-bottom:1px solid #2c3850;display:flex;align-items:center;justify-content:space-between;gap:16px;background:#101827}
+.eyebrow{font-size:11px;letter-spacing:.11em;color:#84a3cd;text-transform:uppercase}
+h1{font-size:20px;letter-spacing:-.03em;margin:2px 0 0}h2{font-size:14px;margin:0}
+.state{border:1px solid #3d586f;border-radius:8px;padding:8px 13px;font-weight:650}
+.state.pass{border-color:#26765c;color:#66dfb3}.state.failed{border-color:#963e55;color:#ffa2b1}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px 24px;background:#0b1220}
+.metric{background:#151f30;border:1px solid #293b54;border-radius:10px;padding:14px 16px;min-width:0}
+.metric label{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#92a9c6;margin-bottom:7px}
+.metric strong{font-size:15px;overflow-wrap:anywhere}
+.main{padding:0 24px 24px;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr);gap:14px;min-height:0}
+.panel{background:#121b2a;border:1px solid #2a3950;border-radius:10px;overflow:hidden;min-width:0}
+.panelhead{padding:17px 18px;border-bottom:1px solid #2a3950;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.muted{color:#94a6be;font-size:12px}.lanes{padding:18px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lane{background:#0e1725;border:1px solid #2d405a;border-radius:9px;padding:14px;min-width:0}
+.lane h3{font-size:12px;color:#9bbbe6;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em}
+.lane .value{font-size:15px;font-weight:650;overflow-wrap:anywhere}.lane small{display:block;color:#91a3be;margin-top:8px}
+.arrow{display:none}.tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:12px 18px;border-top:1px solid #26364b}
+input,select{background:#0c1522;border:1px solid #3a4b65;color:#e5ecf8;padding:9px 10px;border-radius:7px}
+input{min-width:180px;flex:1}
+.eventwrap{max-height:540px;overflow:auto}
+table{border-collapse:collapse;width:100%;table-layout:fixed}th{text-align:left;color:#9aacc4;background:#172438;position:sticky;top:0;font-size:11px;letter-spacing:.05em;padding:11px 12px}
+td{border-top:1px solid #223148;padding:11px 12px;font-size:12px;vertical-align:top;overflow-wrap:anywhere}
+th:nth-child(1){width:54px}th:nth-child(2){width:88px}th:nth-child(3){width:30%}th:nth-child(4){width:24%}
+tr.event{cursor:pointer}tr.event:hover{background:#1b2c42}tr.event.selected{background:#1e3c58}
+.tag{font-size:10px;color:#b9d5fc;text-transform:uppercase}.time{font-variant-numeric:tabular-nums;color:#a8bad1}
+.details{padding:20px}.details dl{margin:14px 0;display:grid;grid-template-columns:110px 1fr;gap:9px;font-size:12px}
+dt{color:#95a9c4}dd{margin:0;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;background:#09111e;border:1px solid #2a3b54;padding:15px;border-radius:8px;font-size:12px;color:#c1d5f0}
+.btn{background:#223b5b;border:1px solid #395d88;color:#e2efff;border-radius:7px;padding:7px 12px}
+.foot{padding:12px 24px;color:#859ab7;font-size:11px}
+@media(max-width:1100px){.main{grid-template-columns:1fr}.details{min-height:200px}}
+@media(max-width:640px){.summary{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.main{padding:0 12px 12px}.lanes{grid-template-columns:1fr}.topbar{padding:14px}}
+</style></head><body><div class="shell">
+<header class="topbar"><div><div class="eyebrow">Recorded execution · read-only evidence</div><h1>Agent Execution Workbench</h1></div><div class="state" id="state"></div></header>
+<section class="summary" id="summary"></section>
+<main class="main">
+<section class="panel"><div class="panelhead"><div><h2>Execution overview</h2><div class="muted">Agent stages and journal-backed tool activity</div></div><span class="muted" id="count"></span></div>
+<div class="lanes" id="lanes"></div>
+<div class="tools"><input aria-label="Search recorded events" id="search" placeholder="Search event name, ID or payload"><select aria-label="Filter activity" id="filter"><option value="all">All activity</option><option value="engineering">Engineering</option><option value="catalog">Catalog</option><option value="system">Orchestration</option></select><button class="btn" id="clear">Clear</button></div>
+<div class="eventwrap"><table><thead><tr><th>#</th><th>Lane</th><th>Observed event</th><th>Parent event</th><th>Time</th></tr></thead><tbody id="events"></tbody></table></div>
+</section>
+<section class="panel"><div class="panelhead"><div><h2>Evidence inspector</h2><div class="muted">Select an actual journal event</div></div><button class="btn" id="copy">Copy JSON</button></div>
+<div class="details"><h2 id="detail-title">Run overview</h2><dl id="metadata"></dl><pre id="details" tabindex="0"></pre></div></section>
+</main><footer class="foot">Read-only snapshot generated from the local run report and verified append-only journal. Event ordering and recorded parent IDs are evidence; no synthetic agent actions or external service state are implied.</footer>
+</div><script type="application/json" id="run-evidence">__EVIDENCE__</script>
 <script>
 "use strict";
 const data=JSON.parse(document.getElementById("run-evidence").textContent);
+const nodes=data.execution_graph?.nodes||[];
 const status=String(data.state||"UNKNOWN");
-document.getElementById("state").textContent=status;
-const entries=[["RUN ID",data.run_id||"UNAVAILABLE"],["EXECUTION STATE",status],
-["ENGINEERING",data.engineering?.status||"UNOBSERVED"],
-["CATALOG",data.catalog?.status||(data.catalog?.verified===true?"VERIFIED":"UNOBSERVED")]];
-const metrics=document.getElementById("metrics");
-for(const [name,value] of entries){const e=document.createElement("div");e.className="metric";const l=document.createElement("div");l.className="label";l.textContent=name;const v=document.createElement("strong");v.textContent=value;e.append(l,v);metrics.append(e)}
-function show(x){document.getElementById("details").textContent=JSON.stringify(x,null,2)}
-const engineering=data.engineering||null,catalog=data.catalog||null;
-const nodes=(data.execution_graph?.nodes||[]).map(n=>({name:n.label,detail:n.observation,edge:n.edge_type,identity:n.id,parent_id:n.parent_id}));
-const dag=document.getElementById("dag");
-dag.style.display="block";dag.style.position="relative";dag.style.overflowX="auto";
-const canvasHeight=Math.max(140,nodes.length*84+20);
-const depths=new Map();
-for(const n of nodes){depths.set(n.identity,n.parent_id?(depths.get(n.parent_id)??-1)+1:0)}
-const graphWidth=Math.max(650,32+(Math.max(0,...depths.values())+1)*320);
-dag.style.minHeight=canvasHeight+"px";
-const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-svg.setAttribute("width",String(graphWidth));
-svg.setAttribute("height",String(canvasHeight));
-svg.style.position="absolute";svg.style.left="0";svg.style.top="0";svg.style.pointerEvents="none";
-dag.append(svg);
-const locations=new Map();
-const depthOf=new Map();
-nodes.forEach((n,i)=>{
-  const parent=n.parent_id?locations.get(n.parent_id):null;
-  const depth=depths.get(n.identity)??0;
-  const x=16+depth*320,y=10+i*84;
-  locations.set(n.identity,{x,y,depth});
-  const b=document.createElement("button");b.className="node";
-  b.style.position="absolute";b.style.left=x+"px";b.style.top=y+"px";
-  b.style.width="288px";b.style.minHeight="70px";
-  b.style.padding="10px 16px";b.style.zIndex="2";
-  const type=document.createElement("div");type.className="label";type.textContent=n.edge||"RUN ROOT";
-  const title=document.createElement("strong");title.textContent=n.name;
-  const status=document.createElement("span");status.textContent=n.identity||"NOT OBSERVED";
-  b.append(type,title,status);b.addEventListener("click",()=>show(n.detail||{status:"NOT_OBSERVED"}));dag.append(b);
-  if(parent){
-    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-    const startX=parent.x+288,startY=parent.y+35;
-    const endX=x,endY=y+35;
-    path.setAttribute("d","M"+startX+" "+startY+" H"+(startX+12)+" V"+endY+" H"+endX);
-    path.setAttribute("fill","none");
-    path.setAttribute("stroke","#638abb");path.setAttribute("stroke-width","2");
-    path.setAttribute("data-parent-id",n.parent_id);
-    path.setAttribute("data-child-id",n.identity);
-    svg.append(path);
-  }
-});
-const timeline=document.getElementById("timeline");
-const events=(data.stages||[]).map(x=>({name:x.name,stage:x}));for(const x of engineering?.events||[]){events.push({name:"Engineering / "+x.stage,stage:x})}
-for(const item of events){const li=document.createElement("li"),b=document.createElement("button");b.textContent=item.name+" · "+(item.stage.elapsed_ms??item.stage.result?.exit_code??"")+" "+(item.stage.elapsed_ms!==undefined?"ms":"");b.addEventListener("click",()=>show(item.stage));li.append(b);timeline.append(li)}
-show({run_id:data.run_id,state:data.state,started_at:data.started_at,finished_at:data.finished_at,stages:data.stages});
+const stateEl=document.getElementById("state");stateEl.textContent=status;stateEl.classList.add(status==="PASS"?"pass":status==="FAILED"?"failed":"");
+const summary=[["Run ID",data.run_id||"UNAVAILABLE"],["Execution",status],["Engineering",data.engineering?.status||"UNOBSERVED"],["Catalog",data.catalog?.status||(data.catalog?.verified?"VERIFIED":"UNOBSERVED")]];
+for(const [name,value] of summary){const el=document.createElement("div");el.className="metric";const label=document.createElement("label");label.textContent=name;const strong=document.createElement("strong");strong.textContent=value;el.append(label,strong);document.getElementById("summary").append(el)}
+const stages=data.stages||[];
+const lanes=[["Engineering",data.engineering?.status||"UNOBSERVED",stages.filter(s=>s.name?.includes("engineering")).length],["Catalog",data.catalog?.status||(data.catalog?.verified?"VERIFIED":"UNOBSERVED"),stages.filter(s=>s.name?.includes("catalog")).length],["Orchestration",status,stages.length]];
+for(const [name,value,count] of lanes){const el=document.createElement("div");el.className="lane";const title=document.createElement("h3");title.textContent=name;const body=document.createElement("div");body.className="value";body.textContent=value;const sub=document.createElement("small");sub.textContent=count+" recorded stage(s)";el.append(title,body,sub);document.getElementById("lanes").append(el)}
+const byId=new Map(nodes.map(n=>[n.id,n]));
+function lane(n){const kind=String(n.kind||"");const payload=JSON.stringify(n.observation||{}).toLowerCase();const name=String(n.label||"").toLowerCase();if(kind.includes("git")||kind.includes("validation")||name.includes("engineering")||payload.includes("engineering"))return "engineering";if(kind.includes("http")||name.includes("catalog")||payload.includes("catalog"))return "catalog";return "system"}
+let shown=data;let activeId=null;
+function inspect(n){activeId=n?.id||null;shown=n||data;document.getElementById("detail-title").textContent=n?.label||"Run overview";const dl=document.getElementById("metadata");dl.replaceChildren();const pairs=n?[["Event ID",n.id],["Parent event",n.parent_id||"Root"],["Lane",lane(n)],["Sequence",n.sequence],["Kind",n.kind]]:[["Run ID",data.run_id],["State",status],["Journal nodes",nodes.length]];for(const [k,v] of pairs){const dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=k;dd.textContent=String(v??"");dl.append(dt,dd)}document.getElementById("details").textContent=JSON.stringify(n?.observation||data,null,2);document.querySelectorAll("tr.event").forEach(tr=>tr.classList.toggle("selected",tr.dataset.id===activeId))}
+function render(){const q=document.getElementById("search").value.toLowerCase(),f=document.getElementById("filter").value;const target=document.getElementById("events");target.replaceChildren();let total=0;for(const n of nodes){const l=lane(n);if(f!=="all"&&l!==f)continue;if(q&&!JSON.stringify(n).toLowerCase().includes(q))continue;total++;const tr=document.createElement("tr");tr.className="event";tr.dataset.id=n.id;const fields=[n.sequence,l,n.label,n.parent_id?((byId.get(n.parent_id)?.label||"Parent")+" · "+n.parent_id.slice(0,8)):"Root",n.created_ns?new Date(n.created_ns/1e6).toLocaleTimeString():"Recorded"];fields.forEach((v,i)=>{const td=document.createElement("td");td.textContent=String(v);if(i===1)td.className="tag";if(i===4)td.className="time";tr.append(td)});tr.tabIndex=0;tr.addEventListener("click",()=>inspect(n));tr.addEventListener("keydown",e=>{if(e.key==="Enter")inspect(n)});target.append(tr)}document.getElementById("count").textContent=total+" of "+nodes.length+" native events";if(activeId)document.querySelectorAll("tr.event").forEach(tr=>tr.classList.toggle("selected",tr.dataset.id===activeId))}
+document.getElementById("search").addEventListener("input",render);document.getElementById("filter").addEventListener("change",render);document.getElementById("clear").addEventListener("click",()=>{document.getElementById("search").value="";document.getElementById("filter").value="all";render()});
+document.getElementById("copy").addEventListener("click",()=>{const value=JSON.stringify(shown?.observation||shown,null,2);if(navigator.clipboard?.writeText)navigator.clipboard.writeText(value).catch(()=>{});else{const t=document.createElement("textarea");t.value=value;document.body.append(t);t.select();document.execCommand("copy");t.remove()}});
+inspect(null);render();
 </script></body></html>'''
 
 def build(report, output):
