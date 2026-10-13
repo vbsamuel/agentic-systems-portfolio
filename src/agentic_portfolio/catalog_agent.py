@@ -10,9 +10,10 @@ from .integrated_run import invoke_model
 from .http_integration import call
 from .catalog import report
 
-def decide(model_config, source, published):
+def decide(model_config, source, published, authority_policy=None):
     findings=report(source["body"],published["body"])
-    prompt=json.dumps({"instruction":"Return ONLY JSON with keys action, skus, rationale. action must be either CORRECT or ESCALATE. Choose ESCALATE for ambiguous records, missing identities or uncertain evidence. Do not invent product data. skus must be an array of product identifiers affected by the findings.",
+    authority_policy=authority_policy or {}
+    prompt=json.dumps({"authority_policy":authority_policy,"instruction":"Return ONLY JSON with keys action, skus, rationale. action must be either CORRECT or ESCALATE. Choose CORRECT for a discrepancy only when authority_policy explicitly identifies the authoritative catalog as the trusted record, the affected fields are allowlisted, and identities are unambiguous. Otherwise choose ESCALATE. Do not invent product data. skus must be an array of product identifiers affected by the findings.",
         "authoritative_sha256":source["sha256"],
         "published_sha256":published["sha256"],
         "findings":findings["findings"]},sort_keys=True)
@@ -30,22 +31,27 @@ def decide(model_config, source, published):
     observed_skus={str(f["sku"]) for f in findings["findings"]}
     if not isinstance(decision["skus"],list) or set(decision["skus"])!=observed_skus:
         raise ValueError("decision not grounded in observed discrepancies")
+    if decision["action"]=="CORRECT":
+        fields={f["field"] for f in findings["findings"]}
+        if (authority_policy.get("catalog_is_source_of_truth") is not True or
+            not fields.issubset(set(authority_policy.get("correctable_fields",[])))):
+            raise ValueError("model correction not authorized by source authority policy")
     if any(f["field"] in ("catalog_record","page") for f in findings["findings"]):
         if decision["action"]!="ESCALATE":
             raise ValueError("identity ambiguity must escalate")
     canonical=json.dumps({"source":source["sha256"],"published":published["sha256"],
-        "etag":published["etag"],"decision":decision},sort_keys=True)
+        "etag":published["etag"],"decision":decision,"authority_policy":authority_policy},sort_keys=True)
     digest=hashlib.sha256(canonical.encode()).hexdigest()
     return {"decision":decision,"decision_digest":digest,
             "model":response["model"],"usage":response.get("usage",{}),
             "response_digest":response["response_digest"],"before":findings}
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
-                             *,writeback=False,approved_digest=None):
+                             *,writeback=False,approved_digest=None,authority_policy=None):
     from .http_integration import synchronize
     source=call(catalog_endpoint)
     published=call(channel_endpoint)
-    outcome=decide(model_config,source,published)
+    outcome=decide(model_config,source,published,authority_policy=authority_policy)
     decision=outcome["decision"]
     if decision["action"]=="ESCALATE" or not writeback:
         outcome.update(verified=outcome["before"]["status"]=="PASS",
