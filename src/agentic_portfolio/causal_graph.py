@@ -50,3 +50,24 @@ def verify(graph):
             raise ValueError("duplicate identity, cycle, or non-topological parent")
         known.add(n["id"])
     return True
+
+
+def native_graph(run_id,events):
+    """Transform verified journal events into a graph with observed causal IDs."""
+    nodes=[]
+    ids=set()
+    for event in events:
+        if event["run_id"]!=run_id:
+            raise ValueError("cross-run event in native graph")
+        identifier=event["event_id"]
+        parent=event["parent_id"]
+        if identifier in ids or (parent is not None and parent not in ids):
+            raise ValueError("duplicate, cyclic or out-of-order native parent")
+        ids.add(identifier)
+        nodes.append({"id":identifier,"sequence":event["seq"],"kind":event["kind"],
+                      "label":event["kind"].replace("_"," ")+" · "+str(event["payload"].get("name","")),
+                      "observation":event["payload"],"parent_id":parent,
+                      "edge_type":"native_parent_id" if parent else "native_run_root",
+                      "run_id":run_id,"created_ns":event["created_ns"]})
+    return {"schema_version":2,"run_id":run_id,"nodes":nodes,
+            "semantics":"native parent IDs recorded at execution time"}
