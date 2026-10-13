@@ -93,7 +93,8 @@ def execute(config, output):
                 Endpoint(**catalog["authoritative"]),
                 Endpoint(**catalog["published"]),
                 writeback=policy["catalog_writeback"],
-                approved_digest=config.get("catalog_approved_digest")))
+                approved_digest=config.get("catalog_approved_digest"),
+                authority_policy=config.get("catalog_authority_policy")))
     else:
         catalog_result=step("catalog_live_http_reconcile_and_verify",
             lambda:synchronize(Endpoint(**catalog["authoritative"]),
