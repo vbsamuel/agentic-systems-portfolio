@@ -16,6 +16,8 @@ def session(base_config,root,reviewer,ssh_private_key,allowed_signers,
     workspace=directory/"workspace"
     runtime=directory/"runtime.json"
     report=directory/"run.json"
+    print(json.dumps({"phase":"REVIEW_STARTED","directory":str(directory),
+                      "report":str(report)}),flush=True)
     review=prepare(base_config,workspace,runtime,report)
     result=json.loads(report.read_text(encoding="utf-8"))
     catalog=result["catalog"]
@@ -48,7 +50,9 @@ def main():
         print(json.dumps(result))
         return 0 if result.get("scope")=="LOCAL_TWO_MODEL_VERTICAL_PASS" else 2
     except (Exception,KeyboardInterrupt) as exc:
+        message=str(exc)
         print(json.dumps({"state":"BLOCKED","error_type":type(exc).__name__,
+                          "reason":message,
                           "details":"Inspect the preserved run artifacts; no success claimed"}))
         return 2
 
