@@ -68,6 +68,7 @@ def run(configuration, output):
             "catalog_approval_grant":configuration.get("catalog_approval_grant"),
             "catalog_approval_grant_file":configuration.get("catalog_approval_grant_file"),
             "approval_verification_key":configuration.get("approval_verification_key"),
+            "approval_allowed_signers_file":configuration.get("approval_allowed_signers_file"),
             "resume_verified_engineering":configuration.get("resume_verified_engineering",False)
         }
         result=execute(config,output)
