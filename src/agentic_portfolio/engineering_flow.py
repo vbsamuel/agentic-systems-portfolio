@@ -35,10 +35,9 @@ def verify_change(queue: Queue, repository: str, base_revision: str,
     if not 1 <= timeout <= 3600:
         raise ValueError('invalid timeout')
     current = git_revision(repository)
-    job = queue.enqueue(repository, current, 'independent-verify')
     if base_revision != current:
-        queue.claim(job, base_revision)
-        raise ValueError('baseline mismatch')
+        raise ValueError('baseline mismatch; no job created')
+    job = queue.enqueue(repository, current, 'independent-verify')
     if queue.claim(job, current) != 'RUNNING':
         raise RuntimeError('repository already claimed')
     if candidate_revision != current:
