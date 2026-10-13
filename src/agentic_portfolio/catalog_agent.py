@@ -6,6 +6,7 @@ discrepancies before any network write occurs.
 """
 import hashlib
 import json
+from .effect_ledger import EffectLedger
 from .integrated_run import invoke_model
 from .http_integration import call
 from .catalog import report
@@ -48,7 +49,7 @@ def decide(model_config, source, published, authority_policy=None):
             "response_digest":response["response_digest"],"before":findings}
 
 def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
-                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None):
+                             *,writeback=False,approved_digest=None,authority_policy=None,approval_grant=None,approval_key=None,run_id=None,effect_ledger_path=None):
     from .http_integration import synchronize
     source=call(catalog_endpoint)
     published=call(channel_endpoint)
@@ -79,7 +80,26 @@ def model_governed_reconcile(model_config,catalog_endpoint,channel_endpoint,
         live_published["etag"]!=published["etag"]):
         outcome.update(verified=False,writeback_performed=False,status="SOURCE_DRIFT")
         return outcome
-    published_result=synchronize(catalog_endpoint,channel_endpoint,writeback=True)
+    if not effect_ledger_path:
+        outcome.update(verified=False,writeback_performed=False,status="EFFECT_LEDGER_REQUIRED")
+        return outcome
+    ledger=EffectLedger(effect_ledger_path)
+    effect_id=hashlib.sha256((run_id+"|"+outcome["decision_digest"]).encode()).hexdigest()
+    ledger.prepare(effect_id,run_id,outcome["decision_digest"],
+                   {"desired_products":[dict(p) for p in live_source["body"]],
+                    "previous_products":[dict(p) for p in live_published["body"]],
+                    "source_sha256":live_source["sha256"],
+                    "published_sha256":live_published["sha256"],
+                    "published_etag":live_published["etag"]})
+    outcome["effect_id"]=effect_id
+    try:
+        published_result=synchronize(catalog_endpoint,channel_endpoint,writeback=True)
+    except Exception:
+        outcome.update(verified=False,writeback_performed=False,status="EFFECT_UNCERTAIN")
+        return outcome
+    ledger.outcome(effect_id,"VERIFIED" if published_result["verified"] else "UNCERTAIN",
+                   {"update_status":published_result.get("update_status"),
+                    "verified":published_result["verified"]})
     outcome.update(verified=published_result["verified"],
                    writeback_performed=published_result["writeback_performed"],
                    status="VERIFIED" if published_result["verified"] else "FAILED_VERIFICATION",
