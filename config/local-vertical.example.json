@@ -9,7 +9,7 @@
   },
   "approvals": {
     "engineering_worktree_mutation": true,
-    "catalog_writeback": true
+    "catalog_writeback": false
   },
   "vertical": {
     "workspace": "/tmp/agentic-vertical-crosscut",
@@ -54,5 +54,6 @@
         "image_url": "/images/device.jpg"
       }
     ]
-  }
+  },
+  "catalog_model_driven": true
 }
